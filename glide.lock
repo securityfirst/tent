@@ -1,0 +1,45 @@
+hash: 53ddfc2663c0255c2cdf0e21559cf1ba22fd7e251b868fb9b22571a826d0918e
+updated: 2016-09-19T16:19:30.033040549+02:00
+imports:
+- name: github.com/golang/protobuf
+  version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
+  subpackages:
+  - proto
+- name: github.com/google/go-github
+  version: 6c0472a7690bdb983189bb16aa31512ae1928e6e
+  subpackages:
+  - github
+- name: github.com/google/go-querystring
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  subpackages:
+  - query
+- name: github.com/gorilla/context
+  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
+- name: github.com/gorilla/securecookie
+  version: c13558c2b1c44da35e0eb043053609a5ba3a1f19
+- name: github.com/gorilla/sessions
+  version: 57a8d1b542398b71f1aa1b06626467fa73c2ddc3
+  subpackages:
+  - github.com\gorilla\sessions
+- name: golang.org/x/net
+  version: 1358eff22f0dd0c54fc521042cc607f6ff4b531a
+  subpackages:
+  - context
+- name: golang.org/x/oauth2
+  version: 3c3a985cb79f52a3190fbc056984415ca6763d01
+  subpackages:
+  - github
+  - internal
+- name: google.golang.org/appengine
+  version: 78199dcb0669fc381c22e919e1e97eba879e8f60
+  subpackages:
+  - internal
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
+- name: gopkg.in/src-d/go-git.v3
+  version: bc035e354ad328192a1e5040d84b73d93291efcb
+testImports: []

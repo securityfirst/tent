@@ -1,0 +1,11 @@
+package: github.com/klaidliadon/octo
+import:
+- package: github.com/google/go-github
+- package: golang.org/x/oauth2
+  subpackages:
+  - github
+- package: github.com/gorilla/sessions
+  subpackages:
+  - github.com\gorilla\sessions
+- package: gopkg.in/src-d/go-git.v3
+  version: ^3.1.1
