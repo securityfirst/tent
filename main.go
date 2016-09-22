@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -21,9 +20,16 @@ var conf = auth.Config{
 	Callback:  auth.HandleConf{"/github/callback", "/profile"},
 }
 
+var (
+	hWebhook  = auth.HandleConf{"/api/webhook", ""}
+	hLogin    = auth.HandleConf{"/", "/profile"}
+	hRepoView = auth.HandleConf{"/api/repo/view/", ""}
+	hRepoEdit = auth.HandleConf{"/api/repo/edit/", ""}
+)
+
 func init() {
-	flag.StringVar(&conf.Id, "id", "", "Github Application ID")
-	flag.StringVar(&conf.Secret, "secret", "", "Github Application Secret")
+	flag.StringVar(&conf.Id, "id", os.Getenv("O_ID"), "Github Application ID")
+	flag.StringVar(&conf.Secret, "secret", os.Getenv("O_SECRET"), "Github Application Secret")
 	flag.Parse()
 	if conf.Id == "" || conf.Secret == "" {
 		flag.Usage()
@@ -32,85 +38,70 @@ func init() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 }
 
+const sampleFile = "contents.md"
+
 func main() {
-	const (
-		repoOwner = "klaidliadon"
-		repoName  = "octo-content"
-	)
-	r, err := repo.New(repoOwner, repoName, conf.OAuth())
+	repo, err := repo.New("klaidliadon", "octo-content", conf.OAuth())
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}
-
 	var hookChan = make(chan struct{})
-	r.StartSync(10*time.Minute, hookChan)
+	repo.StartSync(10*time.Minute, hookChan)
 	hookChan <- struct{}{}
+
 	var a = auth.New(conf, http.DefaultServeMux)
-
-	handle := auth.HandleConf{"/", "/profile"}
-	apiHandle := auth.HandleConf{"/api/profile", ""}
-	repoView := auth.HandleConf{"/api/repo/view/", ""}
-	repoEdit := auth.HandleConf{"/api/repo/edit/", ""}
-	webHook := auth.HandleConf{"/api/webhook", ""}
-
-	sampleFile := "contents.md"
-
-	a.AsAny(webHook, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	a.AsNoone(hWebhook, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
 		case hookChan <- struct{}{}:
 			log.Println("Webook triggered: sending update")
-		default:
-			log.Println("Webook discarded: update pending")
+		default: //Webook discarded: update pending
 		}
 	}))
-	a.AsNoone(handle, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(rw, tplLogin, apiHandle.Endpoint, conf.Login.Endpoint)
+	a.AsNoone(hLogin, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, tplLogin, conf.Login.Endpoint)
 	}))
-	a.AsSomeone(handle.Reverse(), http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		u := a.GetUser(req)
-		fmt.Fprintf(rw, tplProfile,
-			u.Login, u.Email, repoEdit.Endpoint+sampleFile, repoView.Endpoint+sampleFile, conf.Logout.Endpoint)
+	a.AsSomeone(hLogin.Reverse(), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		u := a.GetUser(r)
+		fmt.Fprintf(w, tplProfile,
+			u.Login, u.Email,
+			repo,
+			hRepoEdit.Endpoint+sampleFile,
+			hRepoView.Endpoint+sampleFile,
+			conf.Logout.Endpoint)
 	}))
-	a.AsSomeone(apiHandle, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		u := a.GetUser(req)
-		rw.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(rw).Encode(u); err != nil {
-			log.Printf("API profile: %s", err)
-		}
-	}))
-	a.AsSomeone(repoView, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		path := extractPath(req.URL.Path, repoView.Endpoint)
-		content, err := r.Get(path)
+	a.AsSomeone(hRepoView, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := extractPath(r.URL.Path, hRepoView.Endpoint)
+		content, err := repo.Get(path)
 		if err != nil {
-			handleError(rw, err)
+			handleError(w, err)
 			return
 		}
-		fmt.Fprint(rw, content)
+		fmt.Fprint(w, content)
 	}))
-	a.AsSomeone(repoEdit, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		file := extractPath(req.URL.Path, repoEdit.Endpoint)
-		contents, err := r.Get(file)
+	a.AsSomeone(hRepoEdit, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		file := extractPath(r.URL.Path, hRepoEdit.Endpoint)
+		contents, err := repo.Get(file)
 		if err != nil {
-			handleError(rw, err)
+			handleError(w, err)
 			return
 		}
-		u := a.GetUser(req)
-		if req.Method == "GET" {
-			hash, err := r.Hash(file)
+		u := a.GetUser(r)
+		if r.Method == "GET" {
+			hash, err := repo.Hash(file)
 			if err != nil {
-				handleError(rw, err)
+				handleError(w, err)
 				return
 			}
-			fmt.Fprintf(rw, tplEdit, u.Login, u.Email, file, contents, req.URL.Path, contents, hash)
+			fmt.Fprintf(w, tplEdit, u.Login, u.Email, file, contents, r.URL.Path, contents, hash)
 			return
 		}
-		if err = r.UpdateFile(file, req.FormValue("hash"), []byte(req.FormValue("contents")), u); err != nil {
-			handleError(rw, err)
+		if err = repo.UpdateFile(file, r.FormValue("hash"), []byte(r.FormValue("contents")), u); err != nil {
+			handleError(w, err)
 			return
 		}
 		hookChan <- struct{}{}
 
-		http.Redirect(rw, req, repoView.Endpoint+file, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, hRepoView.Endpoint+file, http.StatusTemporaryRedirect)
 	}))
 
 	log.Printf("Running on :%v", conf.Port)

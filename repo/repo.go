@@ -50,8 +50,14 @@ func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
 	go r.updateLoop(trigger)
 }
 
-func (r *Repo) StopSync() {
-	close(r.shutdown)
+func (r *Repo) StopSync() { close(r.shutdown) }
+
+func (r *Repo) String() string {
+	hash := "n/a"
+	if r.commit != nil {
+		hash = r.commit.Hash.String()
+	}
+	return fmt.Sprintf("%s/%s %s", r.owner, r.name, hash)
 }
 
 func (r *Repo) updateLoop(trigger <-chan struct{}) {

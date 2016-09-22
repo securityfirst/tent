@@ -9,6 +9,7 @@ const tplLogin = `<html>
 
 const tplProfile = `<html>
 	<p>Connected as <b>%s</b> &lt;%s&gt;</p>
+	<p><pre>%s</pre></p>
 	<ul>
 		<li>Sample file <a href="%s">Edit</a> or <a href="%s">View</a> </li>
 		<li><a href="%s">Logout</a></li>
