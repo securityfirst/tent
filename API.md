@@ -6,46 +6,42 @@
 **Success**: Status 200
 ```
 {
-	"success": true,
 	"categories": [
-		"catgeory1",
-		"catgeory2"
+		"category1",
+		"category2"
 	]
 }
 ```
 
 ## Get category items
-**URL**: /api/repo/:category
+**URL**: /api/repo/category/:category
 
 **Method**: GET
 
 **Success**: Status 200
 ```
 {
-	"success": true,
 	"items": [
-		"catgeory1",
-		"catgeory2"
+		"item1",
+		"item2"
 	]
 }
 ```
 **Failure**: Status 404
 ```
 {
-	"success": false,
 	"error": "category not found"
 }
 ```
 
 ## Get file contents
-**URL**: /api/repo/:category/:item
+**URL**: /api/repo/category/:category/item/:item
 
 **Method**: GET
 
 **Success**: Status 200
 ```
 {
-	"success": true,
 	"hash": "sha1",
 	"contents": "file contents"
 }
@@ -53,17 +49,16 @@
 **Failure**: Status 404
 ```
 {
-	"success": false,
 	"error": "file not found"
 }
 ```
 
 ## Update file contents
-**URL**: /api/repo//:category/:item
+**URL**: /api/repo/category/:category/item/:item
 
-**Method**: POST
+**Method**: PUT
 
-**Request Body**: 
+**Request Body**:
 ```
 {
 	"hash": "sha1",
@@ -73,13 +68,14 @@
 **Success**: Status 200
 ```
 {
-	"success": true
+	"id":id,
+	"hash": "sha1",
+	"contents": "file contents"
 }
 ```
 **Failure**: Status 409
 ```
 {
-	"success": false,
 	"error": "hash collision"
 }
 ```
