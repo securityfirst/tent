@@ -1,81 +1,130 @@
-## Get categories
-**URL**: /api/repo/
+# Octo API
 
-**Method**: GET
+## General
 
-**Success**: Status 200
+### http Methods
+
+- GET: View
+- POST: Create
+- PUT: Update
+- DELETE: Delete
+
+### Error Response
 ```
 {
+	"error": "message with details"
+}
+```
+
+## Categories
+
+### List
+**GET** /api/repo/ (200)
+
+**Sample Response**:```{
 	"categories": [
-		"category1",
-		"category2"
+		"catid_1",
+		"catid_2"
 	]
-}
-```
+}```
 
-## Get category items
-**URL**: /api/repo/category/:category
+### Details
+**GET** /api/repo/category/:category _(200 - 404)_
 
-**Method**: GET
+**Sample Response**:```{
+	"name": "Category name",
+	"subcategories": [
+		"subid_1",
+		"subid_2"
+	]
+}```
 
-**Success**: Status 200
-```
-{
+### Create
+**POST** /api/repo/category/:category _(201 - 409, 503)_
+
+**Request Body**:```{
+	"name": "Category name"
+}```
+
+### Update
+**PUT** /api/repo/category/:category _(204 - 503)_
+
+**Request Body**:```{
+	"name": "Category name"
+}```
+
+### Delete
+**DELETE** /api/repo/category/:category _(204 - 503)_
+
+## Subcategories
+
+### Details
+**GET** /api/repo/category/:category/:sub _(200 - 404)_
+
+**Sample Response**:```{
+	"name": "Subcategory name",
 	"items": [
-		"item1",
-		"item2"
+		"itemid_1",
+		"itemid_2"
 	]
-}
-```
-**Failure**: Status 404
-```
+}```
+
+### Create
+**POST** /api/repo/category/:category/:sub _(201 - 409, 503)_
+
+**Request Body**:```
 {
-	"error": "category not found"
-}
-```
+	"name": "Subcategory name"
+}```
 
-## Get file contents
-**URL**: /api/repo/category/:category/item/:item
+### Update
+**PUT** /api/repo/category/:category/:sub _(204 - 503)_
 
-**Method**: GET
+**Request Body**:```
+{
+	"name": "Category name"
+}```
 
-**Success**: Status 200
+### Delete
+**DELETE** /api/repo/category/:category/:sub _(204 - 503)_
+
+## Items
+
+### Details
+**GET** /api/repo/category/:category/:sub/item/:item _(200 - 404)_
+
+**Sample Response**:
 ```
 {
 	"hash": "sha1",
-	"contents": "file contents"
-}
-```
-**Failure**: Status 404
+	"title": "Item Title",
+	"body": "<h1>Sample Body</h1><p>some text</p>",
+	"difficulty": "Beginner"
+}```
+
+### Create
+**POST** /api/repo/category/:category/:sub/item/:item _(201 - 503)_
+
+**Request Body**:
 ```
 {
-	"error": "file not found"
-}
-```
+	"title": "Item Title",
+	"body": "<h1>Sample Body</h1><p>some text</p>",
+	"difficulty": "Beginner"
+}```
 
-## Update file contents
-**URL**: /api/repo/category/:category/item/:item
-
-**Method**: PUT
+### Update
+**PUT** /api/repo/category/:category/:sub/item/:item _(204 - 409, 503)_
 
 **Request Body**:
 ```
 {
 	"hash": "sha1",
-	"contents": "file contents"
-}
-```
-**Success**: Status 200
-```
-{
-	"id":id,
-	"hash": "sha1",
-	"contents": "file contents"
-}
-```
-**Failure**: Status 409
-```
-{
-	"error": "hash collision"
-}
-```
+	"title": "Item Title",
+	"body": "<h1>Sample Body</h1><p>some text</p>",
+	"difficulty": "Beginner"
+}```
+
+
+### Delete
+**DELETE** /api/repo/category/:category/:sub/item/:item _(204 - 503)_
