@@ -117,17 +117,17 @@ func (r *Repo) update() error {
 	return nil
 }
 
-func (r *Repo) file(path string) (*git.File, error) {
+func (r *Repo) file(c Component) (*git.File, error) {
 	if r.commit == nil {
 		return nil, ErrNotReady
 	}
 	r.RLock()
 	defer r.RUnlock()
-	return r.commit.File(path)
+	return r.commit.File(c.Path()[1:])
 }
 
-func (r *Repo) Get(path string) (string, error) {
-	f, err := r.file(path)
+func (r *Repo) Get(c Component) (string, error) {
+	f, err := r.file(c)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +151,7 @@ func (r *Repo) Categories() []string {
 }
 
 func (r *Repo) ComponentHash(c Component) (string, error) {
-	f, err := r.file(c.Path()[1:])
+	f, err := r.file(c)
 	if err != nil {
 		return "", err
 	}
