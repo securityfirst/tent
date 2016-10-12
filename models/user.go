@@ -8,10 +8,10 @@ import (
 )
 
 type User struct {
-	Login string
-	Name  string
-	Email string
-	Token oauth2.Token
+	Login string       `json:"login"`
+	Name  string       `json:"name"`
+	Email string       `json:"email"`
+	Token oauth2.Token `json:"-"`
 }
 
 func (u *User) AsAuthor() *github.CommitAuthor {

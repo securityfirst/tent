@@ -1,10 +1,10 @@
 package repo
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"path"
 	"sync"
 	"time"
 
@@ -35,13 +35,14 @@ func New(owner, name string, conf *oauth2.Config) (*Repo, error) {
 
 type Repo struct {
 	sync.RWMutex
-	shutdown chan struct{}
-	owner    string
-	name     string
-	conf     *oauth2.Config
-	repo     *git.Repository
-	commit   *git.Commit
-	ticker   *time.Ticker
+	shutdown   chan struct{}
+	owner      string
+	name       string
+	conf       *oauth2.Config
+	repo       *git.Repository
+	commit     *git.Commit
+	categories map[string]*Category
+	ticker     *time.Ticker
 }
 
 func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
@@ -52,12 +53,23 @@ func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
 
 func (r *Repo) StopSync() { close(r.shutdown) }
 
-func (r *Repo) String() string {
-	hash := "n/a"
+func (r *Repo) hash() string {
 	if r.commit != nil {
-		hash = r.commit.Hash.String()
+		return r.commit.Hash.String()
 	}
-	return fmt.Sprintf("%s/%s %s", r.owner, r.name, hash)
+	return "n/a"
+}
+
+func (r *Repo) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"owner":  r.owner,
+		"name":   r.name,
+		"commit": r.hash(),
+	})
+}
+
+func (r *Repo) String() string {
+	return fmt.Sprintf("%s/%s %s", r.owner, r.name, r.hash())
 }
 
 func (r *Repo) updateLoop(trigger <-chan struct{}) {
@@ -98,6 +110,10 @@ func (r *Repo) update() error {
 		return err
 	}
 	r.commit = c
+	r.categories, err = ParseTree(r.commit.Tree().Files())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -118,28 +134,34 @@ func (r *Repo) Get(path string) (string, error) {
 	return f.Contents()
 }
 
-func (r *Repo) Hash(path string) (string, error) {
-	f, err := r.file(path)
+func (r *Repo) Category(cat string) *Category {
+	r.RLock()
+	defer r.RUnlock()
+	return r.categories[cat]
+}
+
+func (r *Repo) Categories() []string {
+	r.RLock()
+	defer r.RUnlock()
+	var s = make([]string, 0, len(r.categories))
+	for _, v := range r.categories {
+		s = append(s, v.Id)
+	}
+	return s
+}
+
+func (r *Repo) ComponentHash(c Component) (string, error) {
+	f, err := r.file(c.Path()[1:])
 	if err != nil {
 		return "", err
 	}
 	return f.Hash.String(), nil
 }
 
-func (r *Repo) UpdateFile(file, sha string, data []byte, u *models.User) error {
-	var client = github.NewClient(r.conf.Client(oauth2.NoContext, &u.Token))
-	_, _, err := client.Repositories.UpdateFile(r.owner, r.name, file, newCommit(file, sha, data, u))
+func (r *Repo) Update(c Component, sha string, u *models.User) error {
+	client := github.NewClient(r.conf.Client(oauth2.NoContext, &u.Token))
+	file := c.Path()[1:]
+	commit := newCommit(file, sha, []byte(c.Contents()), u)
+	_, _, err := client.Repositories.UpdateFile(r.owner, r.name, file, commit)
 	return err
-}
-
-func newCommit(file, sha string, data []byte, u *models.User) *github.RepositoryContentFileOptions {
-	author := u.AsAuthor()
-	msg := fmt.Sprintf("Updated %s", path.Base(file))
-	return &github.RepositoryContentFileOptions{
-		Message:   &msg,
-		Content:   data,
-		SHA:       &sha,
-		Author:    author,
-		Committer: author,
-	}
 }

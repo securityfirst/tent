@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
 	"github.com/gorilla/sessions"
 	"github.com/klaidliadon/octo/models"
@@ -19,119 +20,94 @@ const (
 // random string for oauth2 API calls to protect against CSRF
 const randomString = "horse battery staple"
 
-// New creates a new Auth using the given configuration
-func New(c Config, mux *http.ServeMux) *Auth {
-	var a = Auth{
+// NewEngine creates a new Engine using and adds the handle for authentication
+func NewEngine(c Config, engine *gin.Engine) *Engine {
+	var e = Engine{
+		Engine:   engine,
 		config:   c.OAuth(),
-		mux:      mux,
 		port:     c.Port,
 		sessions: sessions.NewCookieStore([]byte(randomString), nil),
 	}
-	c.Login.Redirect = a.config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
-	a.AsNoone(c.Login, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, c.Login.Redirect, http.StatusTemporaryRedirect)
-	}))
-	a.AsSomeone(c.Logout, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := a.destoySession(w, r); err != nil {
+	c.Login.Redirect = e.config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
+	e.GET(c.Login.Endpoint, func(g *gin.Context) {
+		g.Redirect(http.StatusTemporaryRedirect, c.Login.Redirect)
+	})
+	e.GET(c.Logout.Endpoint, func(g *gin.Context) {
+		if err := e.destoySession(g); err != nil {
 			log.Println("Error while invalidating the session:", err)
 		}
-		http.Redirect(w, r, c.Logout.Redirect, http.StatusFound)
-	}))
-	a.AsNoone(c.Callback, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if errString := r.FormValue("error"); errString != "" {
+		g.Redirect(http.StatusTemporaryRedirect, c.Logout.Redirect)
+	})
+	e.GET(c.Callback.Endpoint, func(g *gin.Context) {
+		if errString := g.Query("error"); errString != "" {
 			log.Printf("Service responded with error: %s", errString)
 			return
 		}
-		state := r.FormValue("state")
+		state := g.Query("state")
 		if state != randomString {
 			log.Printf("Invalid oauth state, expected %q, got %q", randomString, state)
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			g.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		}
-		code := r.FormValue("code")
-		token, err := a.config.Exchange(oauth2.NoContext, code)
+		code := g.Query("code")
+		token, err := e.config.Exchange(oauth2.NoContext, code)
 		if err != nil {
 			log.Printf("Cannot get Token: %s", err)
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			g.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		}
 		user := models.User{Token: *token}
-		defer http.Redirect(w, r, c.Callback.Redirect, http.StatusTemporaryRedirect)
+		defer g.Redirect(http.StatusTemporaryRedirect, c.Callback.Redirect)
 
-		var client = github.NewClient(a.config.Client(oauth2.NoContext, &user.Token))
+		var client = github.NewClient(e.config.Client(oauth2.NoContext, &user.Token))
 		u, _, err := client.Users.Get("")
 		if err != nil {
 			log.Printf("Cannot get User: %s", err)
 			return
 		}
 		user.Name, user.Email, user.Login = *u.Name, *u.Email, *u.Login
-		if err := a.createSession(w, r, &user); err != nil {
+		if err := e.createSession(g, &user); err != nil {
 			log.Printf("Cannot save session: %s", err)
 			return
 		}
-	}))
-	return &a
+	})
+	return &e
 }
 
-// Auth is a struct that eases Github OAuth and resource handling
-type Auth struct {
+// Engine is e struct that eases Github OAuth and resource handling
+type Engine struct {
+	*gin.Engine
 	config   *oauth2.Config
-	mux      *http.ServeMux
 	port     int
 	sessions *sessions.CookieStore
 }
 
 // Run starts the configuration address
-func (a *Auth) Run() {
-	http.ListenAndServe(fmt.Sprint(":", a.port), a.mux)
+func (e *Engine) Run() {
+	e.Engine.Run(fmt.Sprint(":", e.port))
 }
 
-func (a *Auth) createSession(w http.ResponseWriter, r *http.Request, u *models.User) error {
-	s, err := a.sessions.New(r, sessionName)
+func (e *Engine) createSession(c *gin.Context, u *models.User) error {
+	s, err := e.sessions.New(c.Request, sessionName)
 	if err != nil {
 		return err
 	}
 	s.Values[githubUser] = u
-	return s.Save(r, w)
+	return s.Save(c.Request, c.Writer)
 }
 
-func (a *Auth) destoySession(w http.ResponseWriter, r *http.Request) error {
-	s, err := a.sessions.Get(r, sessionName)
+func (e *Engine) destoySession(c *gin.Context) error {
+	s, err := e.sessions.Get(c.Request, sessionName)
 	if err != nil {
 		return err
 	}
 	s.Options.MaxAge = -1
-	return s.Save(r, w)
+	return s.Save(c.Request, c.Writer)
 }
 
-func (a *Auth) WithCondition(c CondHandleConf, h http.Handler) {
-	a.mux.Handle(c.Endpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case c.Access(a, r):
-			h.ServeHTTP(w, r)
-		case c.Redirect != "":
-			http.Redirect(w, r, c.Redirect, http.StatusFound)
-		default:
-			w.WriteHeader(http.StatusForbidden)
-			fmt.Fprint(w, "Access denied")
-		}
-	}))
-}
-
-func (a *Auth) AsAny(c HandleConf, h http.Handler) {
-	a.WithCondition(CondHandleConf{c, accessAlways}, h)
-}
-
-func (a *Auth) AsSomeone(c HandleConf, h http.Handler) {
-	a.WithCondition(CondHandleConf{c, (*Auth).connected}, h)
-}
-
-func (a *Auth) AsNoone(c HandleConf, h http.Handler) {
-	a.WithCondition(CondHandleConf{c, (*Auth).disconnected}, h)
-}
-
-func (a *Auth) GetUser(r *http.Request) *models.User {
-	s, err := a.sessions.Get(r, sessionName)
+// GetUser returns the user connected
+func (e *Engine) GetUser(c *gin.Context) *models.User {
+	s, err := e.sessions.Get(c.Request, sessionName)
 	if err != nil {
 		return nil
 	}
@@ -145,6 +121,3 @@ func (a *Auth) GetUser(r *http.Request) *models.User {
 	}
 	return u
 }
-
-func (a *Auth) connected(r *http.Request) bool    { return a.GetUser(r) != nil }
-func (a *Auth) disconnected(r *http.Request) bool { return a.GetUser(r) == nil }

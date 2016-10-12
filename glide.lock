@@ -1,45 +1,107 @@
-hash: 53ddfc2663c0255c2cdf0e21559cf1ba22fd7e251b868fb9b22571a826d0918e
-updated: 2016-09-19T16:19:30.033040549+02:00
+hash: 0a48039a77e1101e1d0beb9f50bf475df962ed4e858e67f59a051bbf93fe0ab9
+updated: 2016-10-12T17:35:44.4897925+02:00
 imports:
+- name: github.com/gin-gonic/gin
+  version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
+  subpackages:
+  - '...'
+  - github.com\gin-gonic\gin
+  - github.com\gin-gonic\gin\binding
+  - github.com\gin-gonic\gin\render
 - name: github.com/golang/protobuf
-  version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
+  version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
   - proto
+  - github.com\golang\protobuf\proto
 - name: github.com/google/go-github
-  version: 6c0472a7690bdb983189bb16aa31512ae1928e6e
+  version: e4194fe26c3379788dc1671da379f719351f093e
   subpackages:
-  - github
+  - github.com\google\go-github\github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
-  - query
+  - github.com\google\go-querystring\query
 - name: github.com/gorilla/context
-  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+  subpackages:
+  - github.com\gorilla\context
 - name: github.com/gorilla/securecookie
-  version: c13558c2b1c44da35e0eb043053609a5ba3a1f19
+  version: fa5329f913702981df43dcb2a380bac429c810b5
+  subpackages:
+  - github.com\gorilla\securecookie
 - name: github.com/gorilla/sessions
-  version: 57a8d1b542398b71f1aa1b06626467fa73c2ddc3
+  version: ca9ada44574153444b00d3fd9c8559e4cc95f896
   subpackages:
   - github.com\gorilla\sessions
+- name: github.com/manucorporat/sse
+  version: ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
+  subpackages:
+  - github.com\manucorporat\sse
+- name: github.com/sergi/go-diff
+  version: ce4a6e0e61d6908298eed511fc0683062d4c7f3b
+  subpackages:
+  - github.com\sergi\go-diff\diffmatchpatch
+- name: github.com/sourcegraph/go-vcsurl
+  version: 1e4dda7d6af7dc921d42612f9aa7e7d6fd80745c
+  subpackages:
+  - github.com\sourcegraph\go-vcsurl
+- name: golang.org/x/crypto
+  version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
+  subpackages:
+  - golang.org\x\crypto\ssh
+  - golang.org\x\crypto\curve25519
+  - golang.org\x\crypto\ed25519
+  - golang.org\x\crypto\ed25519\internal\edwards25519
 - name: golang.org/x/net
-  version: 1358eff22f0dd0c54fc521042cc607f6ff4b531a
+  version: f315505cf3349909cdf013ea56690da34e96a451
   subpackages:
   - context
+  - golang.org\x\net\context
 - name: golang.org/x/oauth2
   version: 3c3a985cb79f52a3190fbc056984415ca6763d01
   subpackages:
   - github
-  - internal
+  - golang.org\x\oauth2
+  - golang.org\x\oauth2\github
+  - golang.org\x\oauth2\internal
 - name: google.golang.org/appengine
-  version: 78199dcb0669fc381c22e919e1e97eba879e8f60
+  version: 596d349602aa23355ff46ade49ebfeb99c0fc550
   subpackages:
-  - internal
-  - internal/base
-  - internal/datastore
-  - internal/log
-  - internal/remote_api
-  - internal/urlfetch
-  - urlfetch
+  - google.golang.org\appengine\urlfetch
+  - google.golang.org\appengine\internal
+  - google.golang.org\appengine\internal\urlfetch
+  - google.golang.org\appengine\internal\base
+  - google.golang.org\appengine\internal\datastore
+  - google.golang.org\appengine\internal\log
+  - google.golang.org\appengine\internal\remote_api
+- name: gopkg.in/go-playground/validator.v8
+  version: c193cecd124b5cc722d7ee5538e945bdb3348435
+  subpackages:
+  - gopkg.in\go-playground\validator.v8
+- name: gopkg.in/sourcegraph/go-vcsurl.v1
+  version: 6b12603ea6fd7f84b8c90118face09df39ea10c6
+  subpackages:
+  - gopkg.in\sourcegraph\go-vcsurl.v1
 - name: gopkg.in/src-d/go-git.v3
   version: bc035e354ad328192a1e5040d84b73d93291efcb
-testImports: []
+  subpackages:
+  - gopkg.in\src-d\go-git.v3
+  - gopkg.in\src-d\go-git.v3\clients
+  - gopkg.in\src-d\go-git.v3\clients\common
+  - gopkg.in\src-d\go-git.v3\core
+  - gopkg.in\src-d\go-git.v3\diff
+  - gopkg.in\src-d\go-git.v3\formats\packfile
+  - gopkg.in\src-d\go-git.v3\storage\memory
+  - gopkg.in\src-d\go-git.v3\storage\seekable
+  - gopkg.in\src-d\go-git.v3\utils\fs
+  - gopkg.in\src-d\go-git.v3\clients\http
+  - gopkg.in\src-d\go-git.v3\clients\ssh
+  - gopkg.in\src-d\go-git.v3\formats\pktline
+  - gopkg.in\src-d\go-git.v3\storage\seekable\internal\gitdir
+  - gopkg.in\src-d\go-git.v3\storage\seekable\internal\index
+  - gopkg.in\src-d\go-git.v3\formats\idxfile
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  subpackages:
+  - gopkg.in\yaml.v2
+devImports: []
