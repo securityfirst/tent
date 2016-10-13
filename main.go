@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -32,57 +31,24 @@ func init() {
 }
 
 func main() {
-	repository, err := repo.New("klaidliadon", "octo-content", conf.OAuth())
+	r, err := repo.New("klaidliadon", "octo-content", conf.OAuth())
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}
 	var hookChan = make(chan struct{})
-	repository.StartSync(10*time.Minute, hookChan)
+	r.StartSync(10*time.Minute, hookChan)
 	hookChan <- struct{}{}
 
 	var engine = auth.NewEngine(conf, gin.Default())
 
-	rcheck := repoChecker{repository}
-	aCheck := authChecker{engine}
+	repo := repoHandler{r}
 
-	engine.GET("/", aCheck.User, func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"user": engine.GetUser(c),
-			"repo": repository,
-		})
-	})
-	engine.GET("/api/repo", aCheck.User, func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"categories": repository.Categories(),
-		})
-	})
-	engine.GET("/api/repo/category/:cat", aCheck.User, rcheck.Category, func(c *gin.Context) {
-		cat := c.MustGet("cat").(*repo.Category)
-		c.JSON(http.StatusOK, gin.H{
-			"name":          cat.Name,
-			"subcategories": cat.Subcategories(),
-		})
-	})
-	engine.GET("/api/repo/category/:cat/:sub", aCheck.User, rcheck.Sub, func(c *gin.Context) {
-		sub := c.MustGet("sub").(*repo.Subcategory)
-		c.JSON(http.StatusOK, gin.H{
-			"name":  sub.Name,
-			"items": sub.Items(),
-		})
-	})
-	engine.GET("/api/repo/category/:cat/:sub/item/:item", aCheck.User, rcheck.Item, func(c *gin.Context) {
-		item := c.MustGet("item").(*repo.Item)
-		hash, err := repository.ComponentHash(item)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"title":      item.Title,
-			"difficulty": item.Difficulty,
-			"hash":       hash,
-			"body":       item.Body,
-		})
-	})
+	var authorized = engine.Use(authChecker{engine}.User)
+
+	authorized.GET("/", repo.Info)
+	authorized.GET("/api/repo", repo.Root)
+	authorized.GET("/api/repo/category/:cat", repo.CheckCat, repo.Category)
+	authorized.GET("/api/repo/category/:cat/:sub", repo.CheckSub, repo.Subcategory)
+	engine.GET("/api/repo/category/:cat/:sub/item/:item", repo.CheckItem, repo.Item)
 	engine.Run()
 }
