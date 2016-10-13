@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -37,18 +38,26 @@ func main() {
 	}
 	var hookChan = make(chan struct{})
 	r.StartSync(10*time.Minute, hookChan)
-	hookChan <- struct{}{}
+	hookChan <- struct{}{} // Force first update
 
-	var engine = auth.NewEngine(conf, gin.Default())
+	engine := auth.NewEngine(conf, gin.Default())
 
-	repo := repoHandler{r}
+	authorized := engine.Use(func(c *gin.Context) {
+		user := engine.GetUser(c)
+		if user != nil {
+			c.Set("user", user)
+			return
+		}
+		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+		c.Abort()
+	})
 
-	var authorized = engine.Use(authChecker{engine}.User)
-
-	authorized.GET("/", repo.Info)
-	authorized.GET("/api/repo", repo.Root)
-	authorized.GET("/api/repo/category/:cat", repo.CheckCat, repo.Category)
-	authorized.GET("/api/repo/category/:cat/:sub", repo.CheckSub, repo.Subcategory)
-	engine.GET("/api/repo/category/:cat/:sub/item/:item", repo.CheckItem, repo.Item)
+	h := r.Handler()
+	authorized.GET("/", h.Info)
+	authorized.GET("/api/repo", h.Root)
+	authorized.GET("/api/repo/update", func(*gin.Context) { hookChan <- struct{}{} })
+	authorized.GET("/api/repo/category/:cat", h.CheckCat, h.Category)
+	authorized.GET("/api/repo/category/:cat/:sub", h.CheckSub, h.Subcategory)
+	authorized.GET("/api/repo/category/:cat/:sub/item/:item", h.CheckItem, h.Item)
 	engine.Run()
 }

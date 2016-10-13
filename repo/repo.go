@@ -45,6 +45,8 @@ type Repo struct {
 	ticker     *time.Ticker
 }
 
+func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
+
 func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
 	r.ticker = time.NewTicker(interval)
 	r.shutdown = make(chan struct{})

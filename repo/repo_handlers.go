@@ -1,32 +1,16 @@
-package main
+package repo
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/klaidliadon/octo/auth"
-	"github.com/klaidliadon/octo/repo"
 )
 
-type authChecker struct {
-	engine *auth.Engine
+type RepoHandler struct {
+	repo *Repo
 }
 
-func (a authChecker) User(c *gin.Context) {
-	user := a.engine.GetUser(c)
-	if user != nil {
-		c.Set("user", user)
-		return
-	}
-	c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
-	c.Abort()
-}
-
-type repoHandler struct {
-	repo *repo.Repo
-}
-
-func (r repoHandler) CheckCat(c *gin.Context) {
+func (r *RepoHandler) CheckCat(c *gin.Context) {
 	cat := r.repo.Category(c.Param("cat"))
 	if cat != nil {
 		c.Set("cat", cat)
@@ -36,9 +20,9 @@ func (r repoHandler) CheckCat(c *gin.Context) {
 	c.Abort()
 }
 
-func (r repoHandler) CheckSub(c *gin.Context) {
+func (r *RepoHandler) CheckSub(c *gin.Context) {
 	r.CheckCat(c)
-	sub := c.MustGet("cat").(*repo.Category).Sub(c.Param("sub"))
+	sub := c.MustGet("cat").(*Category).Sub(c.Param("sub"))
 	if sub != nil {
 		c.Set("sub", sub)
 		return
@@ -47,9 +31,9 @@ func (r repoHandler) CheckSub(c *gin.Context) {
 	c.Abort()
 }
 
-func (r repoHandler) CheckItem(c *gin.Context) {
+func (r *RepoHandler) CheckItem(c *gin.Context) {
 	r.CheckSub(c)
-	item := c.MustGet("sub").(*repo.Subcategory).Item(c.Param("item"))
+	item := c.MustGet("sub").(*Subcategory).Item(c.Param("item"))
 	if item != nil {
 		c.Set("item", item)
 		return
@@ -58,37 +42,37 @@ func (r repoHandler) CheckItem(c *gin.Context) {
 	c.Abort()
 }
 
-func (r repoHandler) Info(c *gin.Context) {
+func (r *RepoHandler) Info(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": c.MustGet("user"),
 		"repo": r.repo,
 	})
 }
 
-func (r repoHandler) Root(c *gin.Context) {
+func (r *RepoHandler) Root(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"categories": r.repo.Categories(),
 	})
 }
 
-func (r repoHandler) Category(c *gin.Context) {
-	cat := c.MustGet("cat").(*repo.Category)
+func (r *RepoHandler) Category(c *gin.Context) {
+	cat := c.MustGet("cat").(*Category)
 	c.JSON(http.StatusOK, gin.H{
 		"name":          cat.Name,
 		"subcategories": cat.Subcategories(),
 	})
 }
 
-func (r repoHandler) Subcategory(c *gin.Context) {
-	sub := c.MustGet("sub").(*repo.Subcategory)
+func (r *RepoHandler) Subcategory(c *gin.Context) {
+	sub := c.MustGet("sub").(*Subcategory)
 	c.JSON(http.StatusOK, gin.H{
 		"name":  sub.Name,
 		"items": sub.Items(),
 	})
 }
 
-func (r repoHandler) Item(c *gin.Context) {
-	item := c.MustGet("item").(*repo.Item)
+func (r *RepoHandler) Item(c *gin.Context) {
+	item := c.MustGet("item").(*Item)
 	hash, err := r.repo.ComponentHash(item)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
