@@ -2,6 +2,7 @@ package repo
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
@@ -41,12 +42,29 @@ type Component interface {
 	Contents() string
 	SetPath(path string) error
 	SetContents(contents string) error
+	SHA() string
 }
 
 type Category struct {
-	Id            string
-	Name          string
+	Id            string `json:"-"`
+	Name          string `json:"name"`
+	Hash          string `json:"hash"`
 	subcategories []*Subcategory
+}
+
+func (c *Category) SHA() string {
+	return c.Hash
+}
+
+func (c *Category) MarshalJSON() ([]byte, error) {
+	var m = map[string]interface{}{
+		"name":          c.Name,
+		"subcategories": c.Subcategories(),
+	}
+	if c.Hash != "" {
+		m["hash"] = c.Hash
+	}
+	return json.Marshal(m)
 }
 
 func (c *Category) Sub(id string) *Subcategory {
@@ -103,9 +121,25 @@ func (c *Category) SetContents(contents string) error {
 
 type Subcategory struct {
 	parent *Category
-	Id     string
-	Name   string
+	Id     string `json:"-"`
+	Name   string `json:"name"`
+	Hash   string `json:"hash"`
 	items  []*Item
+}
+
+func (s *Subcategory) SHA() string {
+	return s.Hash
+}
+
+func (s *Subcategory) MarshalJSON() ([]byte, error) {
+	var m = map[string]interface{}{
+		"name":  s.Name,
+		"items": s.Items(),
+	}
+	if s.Hash != "" {
+		m["hash"] = s.Hash
+	}
+	return json.Marshal(m)
 }
 
 func (s *Subcategory) Items() []string {
@@ -162,10 +196,15 @@ func (s *Subcategory) SetContents(contents string) error {
 
 type Item struct {
 	parent     *Subcategory
-	Id         string
-	Difficulty string
-	Title      string
-	Body       string
+	Id         string `json:"-"`
+	Hash       string `json:"hash"`
+	Difficulty string `json:"difficulty"`
+	Title      string `json:"title"`
+	Body       string `json:"body"`
+}
+
+func (i *Item) SHA() string {
+	return i.Hash
 }
 
 func (i *Item) Path() string {

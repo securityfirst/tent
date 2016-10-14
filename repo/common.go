@@ -3,14 +3,24 @@ package repo
 import (
 	"fmt"
 	"io"
-	"path"
 	"strings"
 
 	"gopkg.in/src-d/go-git.v3"
-
-	"github.com/google/go-github/github"
-	"github.com/klaidliadon/octo/models"
 )
+
+const (
+	actionCreate = iota
+	actionUpdate
+	actionDelete
+)
+
+var commitMsg = map[int]string{
+	actionCreate: "Create",
+	actionUpdate: "Update",
+	actionDelete: "Delete",
+}
+
+func strPtr(s string) *string { return &s }
 
 func repoAddress(owner, name string) string {
 	return fmt.Sprintf("https://github.com/%s/%s", owner, name)
@@ -18,18 +28,6 @@ func repoAddress(owner, name string) string {
 
 func uploadAddress(owner, name, file string) string {
 	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, name, file)
-}
-
-func newCommit(file, sha string, data []byte, u *models.User) *github.RepositoryContentFileOptions {
-	author := u.AsAuthor()
-	msg := fmt.Sprintf("Updated %s", path.Base(file))
-	return &github.RepositoryContentFileOptions{
-		Message:   &msg,
-		Content:   data,
-		SHA:       &sha,
-		Author:    author,
-		Committer: author,
-	}
 }
 
 func ParseTree(iter *git.FileIter) (map[string]*Category, error) {
