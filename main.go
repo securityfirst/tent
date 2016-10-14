@@ -56,8 +56,20 @@ func main() {
 	authorized.GET("/", h.Info)
 	authorized.GET("/api/repo", h.Root)
 	authorized.GET("/api/repo/update", func(*gin.Context) { hookChan <- struct{}{} })
-	authorized.GET("/api/repo/category/:cat", h.CheckCat, h.Category)
-	authorized.GET("/api/repo/category/:cat/:sub", h.CheckSub, h.Subcategory)
-	authorized.GET("/api/repo/category/:cat/:sub/item/:item", h.CheckItem, h.Item)
+
+	authorized.GET("/api/repo/category/:cat", h.SetCat, h.Show)
+	authorized.DELETE("/api/repo/category/:cat", h.ParseCat, h.CanDelete, h.Delete)
+	authorized.PUT("/api/repo/category/:cat", h.ParseCat, h.Update)
+	authorized.POST("/api/repo/category/:cat", h.ParseCat, h.IsNew, h.Create)
+
+	authorized.GET("/api/repo/category/:cat/:sub", h.SetSub, h.Show)
+	authorized.DELETE("/api/repo/category/:cat/:sub", h.ParseSub, h.CanDelete, h.Delete)
+	authorized.PUT("/api/repo/category/:cat/:sub", h.ParseSub, h.Update)
+	authorized.POST("/api/repo/category/:cat/:sub", h.ParseSub, h.IsNew, h.Create)
+
+	authorized.GET("/api/repo/category/:cat/:sub/item/:item", h.SetItem, h.Show)
+	authorized.DELETE("/api/repo/category/:cat/:sub/item/:item", h.ParseItem, h.CanDelete, h.Delete)
+	authorized.PUT("/api/repo/category/:cat/:sub/item/:item", h.ParseItem, h.Update)
+	authorized.POST("/api/repo/category/:cat/:sub/item/:item", h.ParseItem, h.IsNew, h.Create)
 	engine.Run()
 }

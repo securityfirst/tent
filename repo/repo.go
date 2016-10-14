@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/klaidliadon/octo/models"
+	"github.com/klaidliadon/octo/repo/component"
 	"golang.org/x/oauth2"
 )
 
@@ -41,8 +42,13 @@ type Repo struct {
 	conf       *oauth2.Config
 	repo       *git.Repository
 	commit     *git.Commit
-	categories map[string]*Category
+	users      []string
+	categories map[string]*component.Category
 	ticker     *time.Ticker
+}
+
+func (r *Repo) client(u *models.User) *github.Client {
+	return github.NewClient(r.conf.Client(oauth2.NoContext, &u.Token))
 }
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
@@ -50,7 +56,7 @@ func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
 func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
 	r.ticker = time.NewTicker(interval)
 	r.shutdown = make(chan struct{})
-	go r.updateLoop(trigger)
+	go r.pullLoop(trigger)
 }
 
 func (r *Repo) StopSync() { close(r.shutdown) }
@@ -74,13 +80,13 @@ func (r *Repo) String() string {
 	return fmt.Sprintf("%s/%s %s", r.owner, r.name, r.hash())
 }
 
-func (r *Repo) updateLoop(trigger <-chan struct{}) {
+func (r *Repo) pullLoop(trigger <-chan struct{}) {
 	for {
 		select {
 		case <-r.ticker.C:
-			r.update()
+			r.pull()
 		case <-trigger:
-			r.update()
+			r.pull()
 		case <-r.shutdown:
 			r.ticker.Stop()
 			return
@@ -88,7 +94,7 @@ func (r *Repo) updateLoop(trigger <-chan struct{}) {
 	}
 }
 
-func (r *Repo) update() error {
+func (r *Repo) pull() error {
 	r.Lock()
 	defer r.Unlock()
 	if err := r.repo.PullDefault(); err != nil {
@@ -99,7 +105,6 @@ func (r *Repo) update() error {
 		return err
 	}
 	if r.commit != nil && r.commit.Hash == hash {
-		log.Println("No changes")
 		return nil
 	}
 	if r.commit != nil {
@@ -112,14 +117,14 @@ func (r *Repo) update() error {
 		return err
 	}
 	r.commit = c
-	r.categories, err = ParseTree(r.commit.Tree().Files())
+	r.categories, err = component.ParseTree(r.commit.Tree().Files())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *Repo) file(c Component) (*git.File, error) {
+func (r *Repo) file(c component.Component) (*git.File, error) {
 	if r.commit == nil {
 		return nil, ErrNotReady
 	}
@@ -128,7 +133,7 @@ func (r *Repo) file(c Component) (*git.File, error) {
 	return r.commit.File(c.Path()[1:])
 }
 
-func (r *Repo) Get(c Component) (string, error) {
+func (r *Repo) Get(c component.Component) (string, error) {
 	f, err := r.file(c)
 	if err != nil {
 		return "", err
@@ -136,7 +141,7 @@ func (r *Repo) Get(c Component) (string, error) {
 	return f.Contents()
 }
 
-func (r *Repo) Category(cat string) *Category {
+func (r *Repo) Category(cat string) *component.Category {
 	r.RLock()
 	defer r.RUnlock()
 	return r.categories[cat]
@@ -152,7 +157,7 @@ func (r *Repo) Categories() []string {
 	return s
 }
 
-func (r *Repo) ComponentHash(c Component) (string, error) {
+func (r *Repo) ComponentHash(c component.Component) (string, error) {
 	f, err := r.file(c)
 	if err != nil {
 		return "", err
@@ -160,10 +165,38 @@ func (r *Repo) ComponentHash(c Component) (string, error) {
 	return f.Hash.String(), nil
 }
 
-func (r *Repo) Update(c Component, sha string, u *models.User) error {
-	client := github.NewClient(r.conf.Client(oauth2.NoContext, &u.Token))
+func (r *Repo) Create(c component.Component, u *models.User) error {
+	return r.request(c, actionCreate, u)
+}
+
+func (r *Repo) Delete(c component.Component, u *models.User) error {
+	return r.request(c, actionDelete, u)
+}
+
+func (r *Repo) Update(c component.Component, u *models.User) error {
+	return r.request(c, actionUpdate, u)
+}
+
+func (r *Repo) request(c component.Component, action int, u *models.User) (err error) {
 	file := c.Path()[1:]
-	commit := newCommit(file, sha, []byte(c.Contents()), u)
-	_, _, err := client.Repositories.UpdateFile(r.owner, r.name, file, commit)
+	msg := fmt.Sprintf("%s %s", commitMsg[action], file)
+	commit := &github.RepositoryContentFileOptions{
+		Message: &msg, Author: u.AsAuthor(),
+	}
+	switch action {
+	case actionCreate:
+		commit.Content = []byte(c.Contents())
+		_, _, err = r.client(u).Repositories.CreateFile(r.owner, r.name, file, commit)
+	case actionUpdate:
+		commit.SHA = strPtr(c.SHA())
+		commit.Content = []byte(c.Contents())
+		_, _, err = r.client(u).Repositories.UpdateFile(r.owner, r.name, file, commit)
+	case actionDelete:
+		commit.SHA = strPtr(c.SHA())
+		_, _, err = r.client(u).Repositories.DeleteFile(r.owner, r.name, file, commit)
+	}
+	if err == nil {
+		go r.pull()
+	}
 	return err
 }
