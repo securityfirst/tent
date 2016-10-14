@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
 	"github.com/klaidliadon/octo/models"
+	"github.com/klaidliadon/octo/repo/component"
 )
 
 var (
@@ -29,37 +30,49 @@ func (r *RepoHandler) err(c *gin.Context, status int, err error) {
 	c.Abort()
 }
 
-func (r *RepoHandler) getCmp(c *gin.Context) Component {
-	var cmp Component
+func (r *RepoHandler) cmp(c *gin.Context) component.Component {
+	var cmp component.Component
 	if v, ok := c.Get("cat"); ok {
-		cmp = v.(*Category)
+		cmp = v.(*component.Category)
 		if v, ok := c.Get("sub"); ok {
-			cmp = v.(*Subcategory)
+			cmp = v.(*component.Subcategory)
 			if v, ok := c.Get("item"); ok {
-				cmp = v.(*Item)
+				cmp = v.(*component.Item)
 			}
 		}
 	}
 	return cmp
 }
 
-func (r *RepoHandler) getUser(c *gin.Context) *models.User {
+func (r *RepoHandler) user(c *gin.Context) *models.User {
 	return c.MustGet("user").(*models.User)
 }
 
+func (r *RepoHandler) cat(c *gin.Context) *component.Category {
+	return c.MustGet("cat").(*component.Category)
+}
+
+func (r *RepoHandler) sub(c *gin.Context) *component.Subcategory {
+	return c.MustGet("sub").(*component.Subcategory)
+}
+
+func (r *RepoHandler) item(c *gin.Context) *component.Item {
+	return c.MustGet("item").(*component.Item)
+}
+
 func (r *RepoHandler) IsNew(c *gin.Context) {
-	var cmp Component
-	switch t := r.getCmp(c).(type) {
-	case *Category:
+	var cmp component.Component
+	switch t := r.cmp(c).(type) {
+	case *component.Category:
 		if cat := r.repo.Category(t.Id); cat != nil {
 			cmp = cat
 		}
-	case *Subcategory:
-		if sub := t.parent.Sub(t.Id); sub != nil {
+	case *component.Subcategory:
+		if sub := r.cat(c).Sub(t.Id); sub != nil {
 			cmp = sub
 		}
-	case *Item:
-		if item := t.parent.Item(t.Id); item != nil {
+	case *component.Item:
+		if item := r.sub(c).Item(t.Id); item != nil {
 			cmp = item
 		}
 	}
@@ -79,7 +92,7 @@ func (r *RepoHandler) SetCat(c *gin.Context) {
 }
 
 func (r *RepoHandler) ParseCat(c *gin.Context) {
-	var cat Category
+	var cat component.Category
 	if err := c.BindJSON(&cat); err != nil {
 		r.err(c, http.StatusBadRequest, err)
 		return
@@ -90,7 +103,7 @@ func (r *RepoHandler) ParseCat(c *gin.Context) {
 
 func (r *RepoHandler) SetSub(c *gin.Context) {
 	r.SetCat(c)
-	sub := c.MustGet("cat").(*Category).Sub(c.Param("sub"))
+	sub := c.MustGet("cat").(*component.Category).Sub(c.Param("sub"))
 	if sub == nil {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
@@ -100,19 +113,19 @@ func (r *RepoHandler) SetSub(c *gin.Context) {
 
 func (r *RepoHandler) ParseSub(c *gin.Context) {
 	r.SetCat(c)
-	var sub Subcategory
+	var sub component.Subcategory
 	if err := c.BindJSON(&sub); err != nil {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	sub.parent = c.MustGet("cat").(*Category)
+	sub.SetParent(r.cat(c))
 	sub.Id = c.Param("sub")
 	c.Set("sub", &sub)
 }
 
 func (r *RepoHandler) SetItem(c *gin.Context) {
 	r.SetSub(c)
-	item := c.MustGet("sub").(*Subcategory).Item(c.Param("item"))
+	item := c.MustGet("sub").(*component.Subcategory).Item(c.Param("item"))
 	if item == nil {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
@@ -122,12 +135,12 @@ func (r *RepoHandler) SetItem(c *gin.Context) {
 
 func (r *RepoHandler) ParseItem(c *gin.Context) {
 	r.SetSub(c)
-	var item Item
+	var item component.Item
 	if err := c.BindJSON(&item); err != nil {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	item.parent = c.MustGet("sub").(*Subcategory)
+	item.SetParent(r.sub(c))
 	item.Id = c.Param("item")
 	c.Set("item", &item)
 }
@@ -148,7 +161,7 @@ func (r *RepoHandler) Root(c *gin.Context) {
 }
 
 func (r *RepoHandler) Show(c *gin.Context) {
-	cmp := r.getCmp(c)
+	cmp := r.cmp(c)
 	log.Println(cmp)
 	hash, err := r.repo.ComponentHash(cmp)
 	if err != nil {
@@ -157,15 +170,15 @@ func (r *RepoHandler) Show(c *gin.Context) {
 	}
 	var out interface{}
 	switch t := cmp.(type) {
-	case *Category:
+	case *component.Category:
 		v := *t
 		v.Hash = hash
 		out = &v
-	case *Subcategory:
+	case *component.Subcategory:
 		v := *t
 		v.Hash = hash
 		out = &v
-	case *Item:
+	case *component.Item:
 		v := *t
 		v.Hash = hash
 		out = &v
@@ -174,15 +187,15 @@ func (r *RepoHandler) Show(c *gin.Context) {
 }
 
 func (r *RepoHandler) Create(c *gin.Context) {
-	if err := r.repo.Create(r.getCmp(c), r.getUser(c)); err != nil {
+	if err := r.repo.Create(r.cmp(c), r.user(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 	}
 	c.Writer.WriteHeader(http.StatusCreated)
 }
 
 func (r *RepoHandler) Update(c *gin.Context) {
-	cmp := r.getCmp(c)
-	if err := r.repo.Update(cmp, r.getUser(c)); err != nil {
+	cmp := r.cmp(c)
+	if err := r.repo.Update(cmp, r.user(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}

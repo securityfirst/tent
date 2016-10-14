@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/klaidliadon/octo/models"
+	"github.com/klaidliadon/octo/repo/component"
 	"golang.org/x/oauth2"
 )
 
@@ -42,7 +43,7 @@ type Repo struct {
 	repo       *git.Repository
 	commit     *git.Commit
 	users      []string
-	categories map[string]*Category
+	categories map[string]*component.Category
 	ticker     *time.Ticker
 }
 
@@ -116,14 +117,14 @@ func (r *Repo) pull() error {
 		return err
 	}
 	r.commit = c
-	r.categories, err = ParseTree(r.commit.Tree().Files())
+	r.categories, err = component.ParseTree(r.commit.Tree().Files())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *Repo) file(c Component) (*git.File, error) {
+func (r *Repo) file(c component.Component) (*git.File, error) {
 	if r.commit == nil {
 		return nil, ErrNotReady
 	}
@@ -132,7 +133,7 @@ func (r *Repo) file(c Component) (*git.File, error) {
 	return r.commit.File(c.Path()[1:])
 }
 
-func (r *Repo) Get(c Component) (string, error) {
+func (r *Repo) Get(c component.Component) (string, error) {
 	f, err := r.file(c)
 	if err != nil {
 		return "", err
@@ -140,7 +141,7 @@ func (r *Repo) Get(c Component) (string, error) {
 	return f.Contents()
 }
 
-func (r *Repo) Category(cat string) *Category {
+func (r *Repo) Category(cat string) *component.Category {
 	r.RLock()
 	defer r.RUnlock()
 	return r.categories[cat]
@@ -156,7 +157,7 @@ func (r *Repo) Categories() []string {
 	return s
 }
 
-func (r *Repo) ComponentHash(c Component) (string, error) {
+func (r *Repo) ComponentHash(c component.Component) (string, error) {
 	f, err := r.file(c)
 	if err != nil {
 		return "", err
@@ -164,19 +165,19 @@ func (r *Repo) ComponentHash(c Component) (string, error) {
 	return f.Hash.String(), nil
 }
 
-func (r *Repo) Create(c Component, u *models.User) error {
+func (r *Repo) Create(c component.Component, u *models.User) error {
 	return r.request(c, actionCreate, u)
 }
 
-func (r *Repo) Delete(c Component, u *models.User) error {
+func (r *Repo) Delete(c component.Component, u *models.User) error {
 	return r.request(c, actionDelete, u)
 }
 
-func (r *Repo) Update(c Component, u *models.User) error {
+func (r *Repo) Update(c component.Component, u *models.User) error {
 	return r.request(c, actionUpdate, u)
 }
 
-func (r *Repo) request(c Component, action int, u *models.User) (err error) {
+func (r *Repo) request(c component.Component, action int, u *models.User) (err error) {
 	file := c.Path()[1:]
 	msg := fmt.Sprintf("%s %s", commitMsg[action], file)
 	commit := &github.RepositoryContentFileOptions{

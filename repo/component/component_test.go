@@ -1,4 +1,4 @@
-package repo
+package component
 
 import . "gopkg.in/check.v1"
 
@@ -69,19 +69,19 @@ func (*CategorySuite) TestNew(c *C) {
 		err error
 	)
 
-	v, err = NewComponent("/path")
+	v, err = New("/path")
 	c.Assert(err, Equals, ErrInvalid)
 	c.Assert(v, IsNil)
 
-	v, err = NewComponent("/path/.metadata")
+	v, err = New("/path/.metadata")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Category{Id: "path"})
 
-	v, err = NewComponent("/path/sub/.metadata")
+	v, err = New("/path/sub/.metadata")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Subcategory{Id: "sub"})
 
-	v, err = NewComponent("/path/sub/item")
+	v, err = New("/path/sub/item")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Item{Id: "item"})
 }
