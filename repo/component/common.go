@@ -37,6 +37,7 @@ type Component interface {
 	SetPath(path string) error
 	SetContents(contents string) error
 	SHA() string
+	HasChildren() bool
 }
 
 func New(path string) (Component, error) {
@@ -67,33 +68,40 @@ func ParseTree(iter *git.FileIter) (map[string]*Category, error) {
 			}
 			return nil, err
 		}
-		contents, err := f.Contents()
-		if err != nil {
+		if err := parseFile(m, f); err != nil {
 			return nil, err
-		}
-		cmp, err := New("/" + f.Name)
-		if err != nil {
-			return nil, err
-		}
-		p := strings.Split(f.Name, "/")
-		switch t := cmp.(type) {
-		case *Category:
-			m[p[0]] = t
-		case *Subcategory:
-			m[p[0]].Add(t)
-		case *Item:
-			m[p[0]].Sub(p[1]).Add(t)
-		default:
-			return nil, fmt.Errorf("%s - Invalid Path", f.Name)
-		}
-		if err := cmp.SetPath("/" + f.Name); err != nil {
-			return nil, fmt.Errorf("%s - Path: %s", f.Name, err)
-		}
-		if err := cmp.SetContents(contents); err != nil {
-			return nil, fmt.Errorf("%s - Content: %s", f.Name, err)
 		}
 	}
 	return m, nil
+}
+
+func parseFile(m map[string]*Category, f *git.File) error {
+	contents, err := f.Contents()
+	if err != nil {
+		return err
+	}
+	cmp, err := New("/" + f.Name)
+	if err != nil {
+		return err
+	}
+	p := strings.Split(f.Name, "/")
+	switch t := cmp.(type) {
+	case *Category:
+		m[p[0]] = t
+	case *Subcategory:
+		m[p[0]].Add(t)
+	case *Item:
+		m[p[0]].Sub(p[1]).Add(t)
+	default:
+		return fmt.Errorf("%s - Invalid Path", f.Name)
+	}
+	if err := cmp.SetPath("/" + f.Name); err != nil {
+		return fmt.Errorf("%s - Path: %s", f.Name, err)
+	}
+	if err := cmp.SetContents(contents); err != nil {
+		return fmt.Errorf("%s - Content: %s", f.Name, err)
+	}
+	return nil
 }
 
 func strPtr(s string) *string { return &s }

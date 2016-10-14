@@ -20,6 +20,10 @@ func (i *Item) SetParent(s *Subcategory) {
 	i.parent = s
 }
 
+func (i *Item) HasChildren() bool {
+	return false
+}
+
 func (i *Item) SHA() string {
 	return i.Hash
 }

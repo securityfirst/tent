@@ -16,6 +16,10 @@ type Subcategory struct {
 	items  []*Item
 }
 
+func (s *Subcategory) HasChildren() bool {
+	return len(s.items) != 0
+}
+
 func (s *Subcategory) SHA() string {
 	return s.Hash
 }

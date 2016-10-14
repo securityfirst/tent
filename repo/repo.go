@@ -192,6 +192,7 @@ func (r *Repo) request(c component.Component, action int, u *models.User) (err e
 		commit.Content = []byte(c.Contents())
 		_, _, err = r.client(u).Repositories.UpdateFile(r.owner, r.name, file, commit)
 	case actionDelete:
+		commit.SHA = strPtr(c.SHA())
 		_, _, err = r.client(u).Repositories.DeleteFile(r.owner, r.name, file, commit)
 	}
 	if err == nil {

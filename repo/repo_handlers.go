@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	ErrExists   = errors.New("existing id")
-	ErrNotFound = errors.New("not found")
+	ErrExists      = errors.New("existing id")
+	ErrNotFound    = errors.New("not found")
+	ErrHasChildren = errors.New("element has children")
 )
 
 type RepoHandler struct {
@@ -81,6 +82,32 @@ func (r *RepoHandler) IsNew(c *gin.Context) {
 	}
 }
 
+func (r *RepoHandler) CanDelete(c *gin.Context) {
+	var cmp component.Component
+	switch t := r.cmp(c).(type) {
+	case *component.Category:
+		if cat := r.repo.Category(t.Id); cat != nil {
+			cmp = cat
+		}
+	case *component.Subcategory:
+		if sub := r.cat(c).Sub(t.Id); sub != nil {
+			cmp = sub
+		}
+	case *component.Item:
+		if item := r.sub(c).Item(t.Id); item != nil {
+			cmp = item
+		}
+	}
+	if cmp == nil {
+		r.err(c, http.StatusNotFound, ErrNotFound)
+		return
+	}
+	if cmp.HasChildren() {
+		r.err(c, http.StatusForbidden, ErrHasChildren)
+		return
+	}
+}
+
 // SetCat loads the category using the url parameter
 func (r *RepoHandler) SetCat(c *gin.Context) {
 	cat := r.repo.Category(c.Param("cat"))
@@ -103,7 +130,7 @@ func (r *RepoHandler) ParseCat(c *gin.Context) {
 
 func (r *RepoHandler) SetSub(c *gin.Context) {
 	r.SetCat(c)
-	sub := c.MustGet("cat").(*component.Category).Sub(c.Param("sub"))
+	sub := r.cat(c).Sub(c.Param("sub"))
 	if sub == nil {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
@@ -120,12 +147,13 @@ func (r *RepoHandler) ParseSub(c *gin.Context) {
 	}
 	sub.SetParent(r.cat(c))
 	sub.Id = c.Param("sub")
+	log.Println(sub)
 	c.Set("sub", &sub)
 }
 
 func (r *RepoHandler) SetItem(c *gin.Context) {
 	r.SetSub(c)
-	item := c.MustGet("sub").(*component.Subcategory).Item(c.Param("item"))
+	item := r.sub(c).Item(c.Param("item"))
 	if item == nil {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
@@ -194,10 +222,17 @@ func (r *RepoHandler) Create(c *gin.Context) {
 }
 
 func (r *RepoHandler) Update(c *gin.Context) {
-	cmp := r.cmp(c)
-	if err := r.repo.Update(cmp, r.user(c)); err != nil {
+	if err := r.repo.Update(r.cmp(c), r.user(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+func (r *RepoHandler) Delete(c *gin.Context) {
+	if err := r.repo.Delete(r.cmp(c), r.user(c)); err != nil {
+		r.err(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.Writer.WriteHeader(http.StatusNoContent)
 }
