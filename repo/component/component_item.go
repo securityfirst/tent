@@ -53,7 +53,7 @@ func (i *Item) SetPath(filepath string) error {
 }
 
 func (i *Item) SetContents(contents string) error {
-	parts := strings.Split(contents, bodySeparator)
+	parts := strings.Split(strings.Trim(contents, "\n"), bodySeparator)
 	if len(parts) != 2 {
 		return ErrInvalid
 	}
