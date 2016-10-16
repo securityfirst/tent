@@ -78,7 +78,7 @@ func (c *Category) SetPath(filepath string) error {
 }
 
 func (c *Category) SetContents(contents string) error {
-	meta := strings.Split(contents, "\n")
+	meta := strings.Split(strings.Trim(contents, "\n"), "\n")
 	if len(meta) != 1 || !strings.HasPrefix(meta[0], prefixName) {
 		return ErrInvalid
 	}

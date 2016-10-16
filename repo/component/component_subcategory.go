@@ -83,7 +83,7 @@ func (s *Subcategory) SetPath(filepath string) error {
 }
 
 func (s *Subcategory) SetContents(contents string) error {
-	meta := strings.Split(contents, "\n")
+	meta := strings.Split(strings.Trim(contents, "\n"), "\n")
 	if len(meta) != 1 || !strings.HasPrefix(meta[0], prefixName) {
 		return ErrInvalid
 	}

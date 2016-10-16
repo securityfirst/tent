@@ -21,6 +21,18 @@ var (
 	ErrFileNotFound = git.ErrFileNotFound
 )
 
+const (
+	actionCreate = iota
+	actionUpdate
+	actionDelete
+)
+
+var commitMsg = map[int]string{
+	actionCreate: "Create",
+	actionUpdate: "Update",
+	actionDelete: "Delete",
+}
+
 func New(owner, name string, conf *oauth2.Config) (*Repo, error) {
 	r, err := git.NewRepository(repoAddress(owner, name), nil)
 	if err != nil {
@@ -42,7 +54,6 @@ type Repo struct {
 	conf       *oauth2.Config
 	repo       *git.Repository
 	commit     *git.Commit
-	users      []string
 	categories map[string]*component.Category
 	ticker     *time.Ticker
 }
@@ -56,7 +67,19 @@ func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
 func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
 	r.ticker = time.NewTicker(interval)
 	r.shutdown = make(chan struct{})
-	go r.pullLoop(trigger)
+	go func() {
+		for {
+			select {
+			case <-r.ticker.C:
+				r.pull()
+			case <-trigger:
+				r.pull()
+			case <-r.shutdown:
+				r.ticker.Stop()
+				return
+			}
+		}
+	}()
 }
 
 func (r *Repo) StopSync() { close(r.shutdown) }
@@ -80,20 +103,6 @@ func (r *Repo) String() string {
 	return fmt.Sprintf("%s/%s %s", r.owner, r.name, r.hash())
 }
 
-func (r *Repo) pullLoop(trigger <-chan struct{}) {
-	for {
-		select {
-		case <-r.ticker.C:
-			r.pull()
-		case <-trigger:
-			r.pull()
-		case <-r.shutdown:
-			r.ticker.Stop()
-			return
-		}
-	}
-}
-
 func (r *Repo) pull() error {
 	r.Lock()
 	defer r.Unlock()
@@ -101,27 +110,20 @@ func (r *Repo) pull() error {
 		return err
 	}
 	hash, err := r.repo.Remotes[git.DefaultRemoteName].Head()
-	if err != nil {
+	if err != nil || (r.commit != nil && r.commit.Hash == hash) {
 		return err
-	}
-	if r.commit != nil && r.commit.Hash == hash {
-		return nil
 	}
 	if r.commit != nil {
 		log.Println("Changing commit from", r.commit.Hash, "to", hash)
 	} else {
 		log.Println("Checkout with", hash)
 	}
-	c, err := r.repo.Commit(hash)
+	r.commit, err = r.repo.Commit(hash)
 	if err != nil {
 		return err
 	}
-	r.commit = c
 	r.categories, err = component.ParseTree(r.commit.Tree().Files())
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (r *Repo) file(c component.Component) (*git.File, error) {
@@ -199,4 +201,14 @@ func (r *Repo) request(c component.Component, action int, u *models.User) (err e
 		go r.pull()
 	}
 	return err
+}
+
+func strPtr(s string) *string { return &s }
+
+func repoAddress(owner, name string) string {
+	return fmt.Sprintf("https://github.com/%s/%s", owner, name)
+}
+
+func uploadAddress(owner, name, file string) string {
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, name, file)
 }
