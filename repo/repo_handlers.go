@@ -40,6 +40,9 @@ func (r *RepoHandler) cmp(c *gin.Context) component.Component {
 			if v, ok := c.Get("item"); ok {
 				cmp = v.(*component.Item)
 			}
+			if v, ok := c.Get("check"); ok {
+				cmp = v.(*component.Check)
+			}
 		}
 	}
 	return cmp
@@ -61,6 +64,10 @@ func (r *RepoHandler) item(c *gin.Context) *component.Item {
 	return c.MustGet("item").(*component.Item)
 }
 
+func (r *RepoHandler) check(c *gin.Context) *component.Check {
+	return c.MustGet("check").(*component.Check)
+}
+
 func (r *RepoHandler) IsNew(c *gin.Context) {
 	var cmp component.Component
 	switch t := r.cmp(c).(type) {
@@ -75,6 +82,10 @@ func (r *RepoHandler) IsNew(c *gin.Context) {
 	case *component.Item:
 		if item := r.sub(c).Item(t.Id); item != nil {
 			cmp = item
+		}
+	case *component.Check:
+		if check := r.sub(c).Check(t.Id); check != nil {
+			cmp = check
 		}
 	}
 	if cmp != nil {
@@ -95,6 +106,10 @@ func (r *RepoHandler) CanDelete(c *gin.Context) {
 		}
 	case *component.Item:
 		if item := r.sub(c).Item(t.Id); item != nil {
+			cmp = item
+		}
+	case *component.Check:
+		if item := r.sub(c).Check(t.Id); item != nil {
 			cmp = item
 		}
 	}
@@ -173,6 +188,28 @@ func (r *RepoHandler) ParseItem(c *gin.Context) {
 	c.Set("item", &item)
 }
 
+func (r *RepoHandler) SetCheck(c *gin.Context) {
+	r.SetSub(c)
+	check := r.sub(c).Check(c.Param("check"))
+	if check == nil {
+		r.err(c, http.StatusNotFound, ErrNotFound)
+		return
+	}
+	c.Set("check", check)
+}
+
+func (r *RepoHandler) ParseCheck(c *gin.Context) {
+	r.SetSub(c)
+	var check component.Check
+	if err := c.BindJSON(&check); err != nil {
+		r.err(c, http.StatusBadRequest, err)
+		return
+	}
+	check.SetParent(r.sub(c))
+	check.Id = c.Param("check")
+	c.Set("check", &check)
+}
+
 func (r *RepoHandler) Info(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": c.MustGet("user"),
@@ -207,6 +244,10 @@ func (r *RepoHandler) Show(c *gin.Context) {
 		v.Hash = hash
 		out = &v
 	case *component.Item:
+		v := *t
+		v.Hash = hash
+		out = &v
+	case *component.Check:
 		v := *t
 		v.Hash = hash
 		out = &v

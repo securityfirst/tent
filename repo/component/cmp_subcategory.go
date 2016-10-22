@@ -1,7 +1,6 @@
 package component
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -14,6 +13,7 @@ type Subcategory struct {
 	Name   string `json:"name"`
 	Hash   string `json:"hash"`
 	items  []*Item
+	checks []*Check
 }
 
 func (s *Subcategory) HasChildren() bool {
@@ -30,8 +30,9 @@ func (s *Subcategory) SetParent(c *Category) {
 
 func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
-		"name":  s.Name,
-		"items": s.Items(),
+		"name":   s.Name,
+		"items":  s.Items(),
+		"checks": s.Checks(),
 	}
 	if s.Hash != "" {
 		m["hash"] = s.Hash
@@ -47,7 +48,15 @@ func (s *Subcategory) Items() []string {
 	return r
 }
 
-func (s *Subcategory) Add(items ...*Item) {
+func (s *Subcategory) Checks() []string {
+	var r = make([]string, 0, len(s.checks))
+	for _, v := range s.checks {
+		r = append(r, v.Id)
+	}
+	return r
+}
+
+func (s *Subcategory) AddItem(items ...*Item) {
 	for _, v := range items {
 		v.parent = s
 	}
@@ -63,15 +72,28 @@ func (s *Subcategory) Item(id string) *Item {
 	return nil
 }
 
+func (s *Subcategory) AddCheck(checks ...*Check) {
+	for _, v := range checks {
+		v.parent = s
+	}
+	s.checks = append(s.checks, checks...)
+}
+
+func (s *Subcategory) Check(id string) *Check {
+	for _, v := range s.checks {
+		if v.Id == id {
+			return v
+		}
+	}
+	return nil
+}
+
 func (s *Subcategory) Path() string {
 	return fmt.Sprintf("/%s/%s/.metadata", s.parent.Id, s.Id)
 }
 
 func (s *Subcategory) Contents() string {
-	b := bytes.NewBuffer(nil)
-	b.WriteString(prefixName)
-	b.WriteString(s.Name)
-	return b.String()
+	return getMeta(categoryOrder, args{s.Name})
 }
 
 func (s *Subcategory) SetPath(filepath string) error {
@@ -83,10 +105,8 @@ func (s *Subcategory) SetPath(filepath string) error {
 }
 
 func (s *Subcategory) SetContents(contents string) error {
-	meta := strings.Split(strings.Trim(contents, "\n"), "\n")
-	if len(meta) != 1 || !strings.HasPrefix(meta[0], prefixName) {
-		return ErrInvalid
+	if err := checkMeta(contents, categoryOrder); err != nil {
+		return err
 	}
-	s.Name = meta[0][len(prefixName):]
-	return nil
+	return setMeta(contents, categoryOrder, args{&s.Name})
 }

@@ -1,9 +1,11 @@
 package component
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"gopkg.in/src-d/go-git.v3"
@@ -24,11 +26,14 @@ var commitMsg = map[int]string{
 var ErrInvalid = errors.New("Invalid content")
 
 const (
-	bodySeparator    = "\n---\n"
-	prefixName       = "Name:"
-	prefixTitle      = "Title:"
-	prefixDifficulty = "Difficulty:"
-	suffixMeta       = ".metadata"
+	bodySeparator = "\n---\n"
+	suffixMeta    = ".metadata"
+)
+
+var (
+	categoryOrder = []string{"Name:"}
+	itemOrder     = []string{"Title:", "Difficulty:"}
+	checkOrder    = []string{"Title:", "Text:", "Difficulty:", "NoCheck:"}
 )
 
 type Component interface {
@@ -52,6 +57,8 @@ func New(path string) (Component, error) {
 		} else {
 			c = &Item{}
 		}
+	case 5:
+		c = &Check{}
 	default:
 		return nil, ErrInvalid
 	}
@@ -91,7 +98,9 @@ func parseFile(m map[string]*Category, f *git.File) error {
 	case *Subcategory:
 		m[p[0]].Add(t)
 	case *Item:
-		m[p[0]].Sub(p[1]).Add(t)
+		m[p[0]].Sub(p[1]).AddItem(t)
+	case *Check:
+		m[p[0]].Sub(p[1]).AddCheck(t)
 	default:
 		return fmt.Errorf("%s - Invalid Path", f.Name)
 	}
@@ -112,4 +121,56 @@ func repoAddress(owner, name string) string {
 
 func uploadAddress(owner, name, file string) string {
 	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, name, file)
+}
+
+func checkMeta(meta string, order []string) error {
+	rows := strings.Split(meta, "\n")
+	if len(rows) != len(order) {
+		return ErrInvalid
+	}
+	for i := range order {
+		if !strings.HasPrefix(rows[i], order[i]) {
+			return ErrInvalid
+		}
+	}
+	return nil
+}
+
+type args []interface{}
+
+func setMeta(meta string, order []string, pointers args) error {
+	rows := strings.Split(strings.TrimSpace(meta), "\n")
+	if len(rows) != len(order) {
+		return ErrInvalid
+	}
+	for i, p := range pointers {
+		v := rows[i][len(order[i]):]
+		switch pointer := p.(type) {
+		case *string:
+			*pointer = v
+		case *bool:
+			*pointer = v == "true"
+		case *int:
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				return ErrInvalid
+			}
+			*pointer = n
+		default:
+			panic(fmt.Sprintf("Unknown type: %T", pointer))
+		}
+	}
+	return nil
+}
+
+func getMeta(order []string, values args) string {
+	b := bytes.NewBuffer(nil)
+	for i := range values {
+		if i > 0 {
+			b.WriteRune('\n')
+		}
+		b.WriteString(order[i])
+		fmt.Fprint(b, values[i])
+	}
+	return b.String()
 }

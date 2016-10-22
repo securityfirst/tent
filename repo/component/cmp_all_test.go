@@ -1,12 +1,35 @@
 package component
 
-import . "gopkg.in/check.v1"
+import (
+	"testing"
 
-var _ = Suite(&CategorySuite{})
+	. "gopkg.in/check.v1"
+	git "gopkg.in/src-d/go-git.v3"
+)
 
-type CategorySuite struct{}
+func TestAll(t *testing.T) {
+	TestingT(t)
+}
 
-func (*CategorySuite) TestCategory(c *C) {
+var _ = Suite(&CmpSuite{})
+
+type CmpSuite struct{}
+
+func (*CmpSuite) TestParse(c *C) {
+	r, err := git.NewRepository(repoAddress("klaidliadon", "octo-content"), nil)
+	c.Assert(err, IsNil)
+	err = r.PullDefault()
+	c.Assert(err, IsNil)
+	hash, err := r.Remotes[git.DefaultRemoteName].Head()
+	c.Assert(err, IsNil)
+	commit, err := r.Commit(hash)
+	c.Assert(err, IsNil)
+	m, err := ParseTree(commit.Tree().Files())
+	c.Assert(err, IsNil)
+	c.Assert(m, Not(HasLen), 0)
+}
+
+func (*CmpSuite) TestCategory(c *C) {
 	var v Category
 	c.Assert(v.SetPath("/path"), Equals, ErrInvalid)
 	c.Assert(v.SetPath("/path/.metadata"), IsNil)
@@ -18,7 +41,7 @@ func (*CategorySuite) TestCategory(c *C) {
 	c.Assert(v.Contents(), Equals, "Name:Test")
 }
 
-func (*CategorySuite) TestSubcategory(c *C) {
+func (*CmpSuite) TestSubcategory(c *C) {
 	var (
 		v Category
 		s Subcategory
@@ -38,7 +61,7 @@ func (*CategorySuite) TestSubcategory(c *C) {
 	c.Assert(s.Contents(), Equals, "Name:SubTest")
 }
 
-func (*CategorySuite) TestItem(c *C) {
+func (*CmpSuite) TestItem(c *C) {
 	var (
 		v Category
 		s Subcategory
@@ -49,7 +72,7 @@ func (*CategorySuite) TestItem(c *C) {
 	v.Add(&s)
 	s.SetPath("/path/sub/.metadata")
 	s.SetContents("Name:SubTest")
-	s.Add(&i)
+	s.AddItem(&i)
 
 	c.Assert(i.SetPath("/path"), Equals, ErrInvalid)
 	c.Assert(i.SetPath("/path/sub"), Equals, ErrInvalid)
@@ -63,7 +86,33 @@ func (*CategorySuite) TestItem(c *C) {
 	c.Assert(i.Contents(), Equals, "Title:Title\nDifficulty:easy\n---\nBody")
 }
 
-func (*CategorySuite) TestNew(c *C) {
+func (*CmpSuite) TestCheck(c *C) {
+	var (
+		v Category
+		s Subcategory
+		i Check
+	)
+	v.SetPath("/path/.metadata")
+	v.SetContents("Name:Test")
+	v.Add(&s)
+	s.SetPath("/path/sub/.metadata")
+	s.SetContents("Name:SubTest")
+	s.AddCheck(&i)
+
+	c.Assert(i.SetPath("/path"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/path/sub"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/path/sub/.metadata"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/path/sub/filename"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/path/sub/checks/filename"), IsNil)
+	c.Assert(i.SetContents("contents"), Equals, ErrInvalid)
+	c.Assert(i.SetContents("Title:Title\n---\nBody"), Equals, ErrInvalid)
+	c.Assert(i.SetContents("Title:Title\nDifficulty:easy"), Equals, ErrInvalid)
+	c.Assert(i.SetContents("Title:Title\nText:text\nDifficulty:easy\nNoCheck:true"), IsNil)
+	c.Assert(i.Path(), Equals, "/path/sub/checks/filename")
+	c.Assert(i.Contents(), Equals, "Title:Title\nText:text\nDifficulty:easy\nNoCheck:true")
+}
+
+func (*CmpSuite) TestNew(c *C) {
 	var (
 		v   Component
 		err error
@@ -84,4 +133,8 @@ func (*CategorySuite) TestNew(c *C) {
 	v, err = New("/path/sub/item")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Item{Id: "item"})
+
+	v, err = New("/path/sub/checks/check")
+	c.Assert(err, IsNil)
+	c.Assert(v, DeepEquals, &Check{Id: "check"})
 }

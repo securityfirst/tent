@@ -1,7 +1,6 @@
 package component
 
 import (
-	"bytes"
 	"fmt"
 	"path"
 	"strings"
@@ -33,15 +32,7 @@ func (i *Item) Path() string {
 }
 
 func (i *Item) Contents() string {
-	b := bytes.NewBuffer(nil)
-	b.WriteString(prefixTitle)
-	b.WriteString(i.Title)
-	b.WriteRune('\n')
-	b.WriteString(prefixDifficulty)
-	b.WriteString(i.Difficulty)
-	b.WriteString(bodySeparator)
-	b.WriteString(i.Body)
-	return b.String()
+	return fmt.Sprint(getMeta(itemOrder, args{i.Title, i.Difficulty}), bodySeparator, i.Body)
 }
 
 func (i *Item) SetPath(filepath string) error {
@@ -57,12 +48,13 @@ func (i *Item) SetContents(contents string) error {
 	if len(parts) != 2 {
 		return ErrInvalid
 	}
-	meta := strings.Split(parts[0], "\n")
-	if len(meta) != 2 || !strings.HasPrefix(meta[0], prefixTitle) || !strings.HasPrefix(meta[1], prefixDifficulty) {
-		return ErrInvalid
+	if err := checkMeta(parts[0], itemOrder); err != nil {
+		return err
 	}
-	i.Title = meta[0][len(prefixTitle):]
-	i.Difficulty = meta[1][len(prefixDifficulty):]
 	i.Body = parts[1]
-	return nil
+	return setMeta(
+		parts[0],
+		itemOrder,
+		[]interface{}{&i.Title, &i.Difficulty},
+	)
 }

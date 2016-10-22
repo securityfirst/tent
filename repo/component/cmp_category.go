@@ -1,7 +1,6 @@
 package component
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -63,10 +62,7 @@ func (c *Category) Path() string {
 }
 
 func (c *Category) Contents() string {
-	b := bytes.NewBuffer(nil)
-	b.WriteString(prefixName)
-	b.WriteString(c.Name)
-	return b.String()
+	return getMeta(categoryOrder, args{c.Name})
 }
 
 func (c *Category) SetPath(filepath string) error {
@@ -78,10 +74,8 @@ func (c *Category) SetPath(filepath string) error {
 }
 
 func (c *Category) SetContents(contents string) error {
-	meta := strings.Split(strings.Trim(contents, "\n"), "\n")
-	if len(meta) != 1 || !strings.HasPrefix(meta[0], prefixName) {
-		return ErrInvalid
+	if err := checkMeta(contents, categoryOrder); err != nil {
+		return err
 	}
-	c.Name = meta[0][len(prefixName):]
-	return nil
+	return setMeta(contents, categoryOrder, args{&c.Name})
 }

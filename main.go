@@ -57,19 +57,32 @@ func main() {
 	authorized.GET("/api/repo", h.Root)
 	authorized.GET("/api/repo/update", func(*gin.Context) { hookChan <- struct{}{} })
 
-	authorized.GET("/api/repo/category/:cat", h.SetCat, h.Show)
-	authorized.DELETE("/api/repo/category/:cat", h.ParseCat, h.CanDelete, h.Delete)
-	authorized.PUT("/api/repo/category/:cat", h.ParseCat, h.Update)
-	authorized.POST("/api/repo/category/:cat", h.ParseCat, h.IsNew, h.Create)
+	const (
+		category    = "/api/repo/category/:cat"
+		subcategory = "/api/repo/category/:cat/:sub"
+		item        = "/api/repo/category/:cat/:sub/item/:item"
+		check       = "/api/repo/category/:cat/:sub/check/:check"
+	)
 
-	authorized.GET("/api/repo/category/:cat/:sub", h.SetSub, h.Show)
-	authorized.DELETE("/api/repo/category/:cat/:sub", h.ParseSub, h.CanDelete, h.Delete)
-	authorized.PUT("/api/repo/category/:cat/:sub", h.ParseSub, h.Update)
-	authorized.POST("/api/repo/category/:cat/:sub", h.ParseSub, h.IsNew, h.Create)
+	authorized.GET(category, h.SetCat, h.Show)
+	authorized.PUT(category, h.ParseCat, h.Update)
+	authorized.DELETE(category, h.ParseCat, h.CanDelete, h.Delete)
+	authorized.POST(category, h.ParseCat, h.IsNew, h.Create)
 
-	authorized.GET("/api/repo/category/:cat/:sub/item/:item", h.SetItem, h.Show)
-	authorized.DELETE("/api/repo/category/:cat/:sub/item/:item", h.ParseItem, h.CanDelete, h.Delete)
-	authorized.PUT("/api/repo/category/:cat/:sub/item/:item", h.ParseItem, h.Update)
-	authorized.POST("/api/repo/category/:cat/:sub/item/:item", h.ParseItem, h.IsNew, h.Create)
+	authorized.GET(subcategory, h.SetSub, h.Show)
+	authorized.PUT(subcategory, h.ParseSub, h.Update)
+	authorized.DELETE(subcategory, h.ParseSub, h.CanDelete, h.Delete)
+	authorized.POST(subcategory, h.ParseSub, h.IsNew, h.Create)
+
+	authorized.GET(item, h.SetItem, h.Show)
+	authorized.PUT(item, h.ParseItem, h.Update)
+	authorized.DELETE(item, h.ParseItem, h.CanDelete, h.Delete)
+	authorized.POST(item, h.ParseItem, h.IsNew, h.Create)
+
+	authorized.GET(check, h.SetCheck, h.Show)
+	authorized.PUT(check, h.ParseCheck, h.Update)
+	authorized.DELETE(check, h.ParseCheck, h.CanDelete, h.Delete)
+	authorized.POST(check, h.ParseCheck, h.IsNew, h.Create)
+
 	engine.Run()
 }
