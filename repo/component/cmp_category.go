@@ -22,6 +22,17 @@ func (c *Category) SHA() string {
 	return c.Hash
 }
 
+func (c *Category) Tree() interface{} {
+	var subs = make([]interface{}, 0, len(c.subcategories))
+	for i := range c.subcategories {
+		subs = append(subs, c.subcategories[i].Tree())
+	}
+	return map[string]interface{}{
+		"name":          c.Name,
+		"subcategories": subs,
+	}
+}
+
 func (c *Category) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
 		"name":          c.Name,

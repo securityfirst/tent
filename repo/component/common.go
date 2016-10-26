@@ -45,7 +45,7 @@ type Component interface {
 	HasChildren() bool
 }
 
-func New(path string) (Component, error) {
+func newCmp(path string) (Component, error) {
 	var c Component
 	p := strings.Split(path, "/")
 	switch l := len(p); l {
@@ -65,42 +65,49 @@ func New(path string) (Component, error) {
 	return c, c.SetPath(path)
 }
 
-func ParseTree(iter *git.FileIter) (map[string]*Category, error) {
-	m := make(map[string]*Category)
+type TreeParser struct {
+	index      map[string]int
+	Categories []*Category
+}
+
+func (t *TreeParser) Parse(iter *git.FileIter) error {
+	t.index = make(map[string]int)
+	t.Categories = make([]*Category, 0)
 	for {
 		f, err := iter.Next()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, err
+			return err
 		}
-		if err := parseFile(m, f); err != nil {
-			return nil, err
+		if err := t.parseFile(f); err != nil {
+			return err
 		}
 	}
-	return m, nil
+	return nil
 }
 
-func parseFile(m map[string]*Category, f *git.File) error {
+func (t *TreeParser) parseFile(f *git.File) error {
 	contents, err := f.Contents()
 	if err != nil {
 		return err
 	}
-	cmp, err := New("/" + f.Name)
+	cmp, err := newCmp("/" + f.Name)
 	if err != nil {
 		return err
 	}
 	p := strings.Split(f.Name, "/")
-	switch t := cmp.(type) {
+	switch c := cmp.(type) {
 	case *Category:
-		m[p[0]] = t
+		t.index[p[0]] = len(t.Categories)
+		t.Categories = append(t.Categories, c)
 	case *Subcategory:
-		m[p[0]].Add(t)
+		t.Categories[t.index[p[0]]].Add(c)
 	case *Item:
-		m[p[0]].Sub(p[1]).AddItem(t)
+		t.Categories[t.index[p[0]]].Sub(p[1]).AddItem(c)
 	case *Check:
-		m[p[0]].Sub(p[1]).AddCheck(t)
+		t.Categories[t.index[p[0]]].Sub(p[1]).AddCheck(c)
 	default:
 		return fmt.Errorf("%s - Invalid Path", f.Name)
 	}

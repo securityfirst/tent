@@ -20,6 +20,14 @@ func (s *Subcategory) HasChildren() bool {
 	return len(s.items) != 0
 }
 
+func (s *Subcategory) Tree() interface{} {
+	return map[string]interface{}{
+		"name":   s.Name,
+		"items":  s.items,
+		"checks": s.checks,
+	}
+}
+
 func (s *Subcategory) SHA() string {
 	return s.Hash
 }

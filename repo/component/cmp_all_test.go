@@ -24,9 +24,8 @@ func (*CmpSuite) TestParse(c *C) {
 	c.Assert(err, IsNil)
 	commit, err := r.Commit(hash)
 	c.Assert(err, IsNil)
-	m, err := ParseTree(commit.Tree().Files())
+	err = (&TreeParser{}).Parse(commit.Tree().Files())
 	c.Assert(err, IsNil)
-	c.Assert(m, Not(HasLen), 0)
 }
 
 func (*CmpSuite) TestCategory(c *C) {
@@ -118,23 +117,23 @@ func (*CmpSuite) TestNew(c *C) {
 		err error
 	)
 
-	v, err = New("/path")
+	v, err = newCmp("/path")
 	c.Assert(err, Equals, ErrInvalid)
 	c.Assert(v, IsNil)
 
-	v, err = New("/path/.metadata")
+	v, err = newCmp("/path/.metadata")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Category{Id: "path"})
 
-	v, err = New("/path/sub/.metadata")
+	v, err = newCmp("/path/sub/.metadata")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Subcategory{Id: "sub"})
 
-	v, err = New("/path/sub/item")
+	v, err = newCmp("/path/sub/item")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Item{Id: "item"})
 
-	v, err = New("/path/sub/checks/check")
+	v, err = newCmp("/path/sub/checks/check")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Check{Id: "check"})
 }

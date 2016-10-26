@@ -42,6 +42,10 @@ func main() {
 
 	engine := auth.NewEngine(conf, gin.Default())
 
+	engine.GET("/api/tree", func(c *gin.Context) {
+		c.JSON(http.StatusOK, r.Tree())
+	})
+
 	authorized := engine.Use(func(c *gin.Context) {
 		user := engine.GetUser(c)
 		if user != nil {
