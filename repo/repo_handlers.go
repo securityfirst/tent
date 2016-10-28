@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
-	"github.com/klaidliadon/octo/models"
-	"github.com/klaidliadon/octo/repo/component"
+	"github.com/securityfirst/octo/models"
+	"github.com/securityfirst/octo/repo/component"
 )
 
 var (
