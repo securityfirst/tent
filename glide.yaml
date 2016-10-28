@@ -1,4 +1,4 @@
-package: github.com/klaidliadon/octo
+package: github.com/securityfirst/octo
 import:
 - package: github.com/google/go-github
 - package: golang.org/x/oauth2

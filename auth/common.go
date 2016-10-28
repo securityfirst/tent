@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"github.com/klaidliadon/octo/models"
+	"github.com/securityfirst/octo/models"
 
 	"golang.org/x/oauth2"
 	lib "golang.org/x/oauth2/github"

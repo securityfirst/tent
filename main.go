@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/klaidliadon/octo/auth"
-	"github.com/klaidliadon/octo/repo"
+	"github.com/securityfirst/octo/auth"
+	"github.com/securityfirst/octo/repo"
 )
 
 var conf = auth.Config{
@@ -32,7 +32,7 @@ func init() {
 }
 
 func main() {
-	r, err := repo.New("klaidliadon", "octo-content", conf.OAuth())
+	r, err := repo.New("securityfirst", "octo-content", conf.OAuth())
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
 	"github.com/gorilla/sessions"
-	"github.com/klaidliadon/octo/models"
+	"github.com/securityfirst/octo/models"
 	"golang.org/x/oauth2"
 )
 
