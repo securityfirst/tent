@@ -3,14 +3,14 @@ package component
 import (
 	"encoding/json"
 	"fmt"
-	"path"
-	"strings"
+	"regexp"
 )
 
 type Category struct {
 	Id            string `json:"-"`
 	Name          string `json:"name"`
 	Hash          string `json:"hash"`
+	Locale        string `json:"-"`
 	subcategories []*Subcategory
 }
 
@@ -68,20 +68,32 @@ func (c *Category) Add(subs ...*Subcategory) {
 	c.subcategories = append(c.subcategories, subs...)
 }
 
+func (c *Category) basePath() string {
+	var loc string
+	if c.Locale != "" {
+		loc = "_" + c.Locale
+	}
+	return fmt.Sprintf("/contents%s/%s", loc, c.Id)
+}
+
 func (c *Category) Path() string {
-	return fmt.Sprintf("/%s/%s", c.Id, suffixMeta)
+	return fmt.Sprintf("%s/%s", c.basePath(), suffixMeta)
+}
+
+var catPath = regexp.MustCompile("/contents_([a-z]{2})/([^/]+)/.metadata")
+
+func (c *Category) SetPath(filepath string) error {
+	p := catPath.FindStringSubmatch(filepath)
+	if len(p) == 0 {
+		return ErrInvalid
+	}
+	c.Locale = p[1]
+	c.Id = p[2]
+	return nil
 }
 
 func (c *Category) Contents() string {
 	return getMeta(categoryOrder, args{c.Name})
-}
-
-func (c *Category) SetPath(filepath string) error {
-	if p := strings.Split(filepath, "/"); len(p) != 3 || p[0] != "" || p[2] != suffixMeta {
-		return ErrInvalid
-	}
-	c.Id = path.Base(path.Dir(filepath))
-	return nil
 }
 
 func (c *Category) SetContents(contents string) error {

@@ -16,6 +16,7 @@ var (
 	ErrExists      = errors.New("existing id")
 	ErrNotFound    = errors.New("not found")
 	ErrHasChildren = errors.New("element has children")
+	ErrLanguage    = errors.New("invalid language")
 )
 
 type RepoHandler struct {
@@ -68,11 +69,27 @@ func (r *RepoHandler) check(c *gin.Context) *component.Check {
 	return c.MustGet("check").(*component.Check)
 }
 
+func (r *RepoHandler) locale(c *gin.Context) string {
+	return c.MustGet("locale").(string)
+}
+
+func (r *RepoHandler) ParseLocale(c *gin.Context) {
+	s := c.Request.Header.Get("X-Octo-Language")
+	if s == "" {
+		s = "en"
+	}
+	if len(s) != 2 {
+		r.err(c, http.StatusBadRequest, ErrLanguage)
+		return
+	}
+	c.Set("locale", s)
+}
+
 func (r *RepoHandler) IsNew(c *gin.Context) {
 	var cmp component.Component
 	switch t := r.cmp(c).(type) {
 	case *component.Category:
-		if cat := r.repo.Category(t.Id); cat != nil {
+		if cat := r.repo.Category(t.Id, r.locale(c)); cat != nil {
 			cmp = cat
 		}
 	case *component.Subcategory:
@@ -97,7 +114,7 @@ func (r *RepoHandler) CanDelete(c *gin.Context) {
 	var cmp component.Component
 	switch t := r.cmp(c).(type) {
 	case *component.Category:
-		if cat := r.repo.Category(t.Id); cat != nil {
+		if cat := r.repo.Category(t.Id, r.locale(c)); cat != nil {
 			cmp = cat
 		}
 	case *component.Subcategory:
@@ -125,7 +142,7 @@ func (r *RepoHandler) CanDelete(c *gin.Context) {
 
 // SetCat loads the category using the url parameter
 func (r *RepoHandler) SetCat(c *gin.Context) {
-	cat := r.repo.Category(c.Param("cat"))
+	cat := r.repo.Category(c.Param("cat"), r.locale(c))
 	if cat == nil {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
@@ -276,4 +293,8 @@ func (r *RepoHandler) Delete(c *gin.Context) {
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+func (r *RepoHandler) Tree(c *gin.Context) {
+	c.JSON(http.StatusOK, r.repo.Tree(r.locale(c)))
 }

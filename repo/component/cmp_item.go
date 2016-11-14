@@ -2,7 +2,7 @@ package component
 
 import (
 	"fmt"
-	"path"
+	"regexp"
 	"strings"
 )
 
@@ -28,19 +28,22 @@ func (i *Item) SHA() string {
 }
 
 func (i *Item) Path() string {
-	return fmt.Sprintf("/%s/%s/%s", i.parent.parent.Id, i.parent.Id, i.Id)
+	return i.parent.basePath() + "/" + i.Id
+}
+
+var itemPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/([^/]+)")
+
+func (i *Item) SetPath(filepath string) error {
+	p := itemPath.FindStringSubmatch(filepath)
+	if len(p) == 0 || p[1] == suffixMeta {
+		return ErrInvalid
+	}
+	i.Id = p[1]
+	return nil
 }
 
 func (i *Item) Contents() string {
 	return fmt.Sprint(getMeta(itemOrder, args{i.Title, i.Difficulty}), bodySeparator, i.Body)
-}
-
-func (i *Item) SetPath(filepath string) error {
-	if p := strings.Split(filepath, "/"); len(p) != 4 || p[0] != "" || p[3] == suffixMeta {
-		return ErrInvalid
-	}
-	i.Id = path.Base(filepath)
-	return nil
 }
 
 func (i *Item) SetContents(contents string) error {

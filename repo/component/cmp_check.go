@@ -2,12 +2,7 @@ package component
 
 import (
 	"fmt"
-	"path"
-	"strings"
-)
-
-const (
-	checksPath = "checks"
+	"regexp"
 )
 
 type Check struct {
@@ -33,19 +28,22 @@ func (i *Check) SHA() string {
 }
 
 func (i *Check) Path() string {
-	return fmt.Sprintf("/%s/%s/%s/%s", i.parent.parent.Id, i.parent.Id, checksPath, i.Id)
+	return fmt.Sprintf("%s/checks/%s", i.parent.basePath(), i.Id)
+}
+
+var checkPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/checks/([^/]+)")
+
+func (i *Check) SetPath(filepath string) error {
+	p := checkPath.FindStringSubmatch(filepath)
+	if len(p) == 0 {
+		return ErrInvalid
+	}
+	i.Id = p[1]
+	return nil
 }
 
 func (i *Check) Contents() string {
 	return getMeta(checkOrder, args{i.Title, i.Text, i.Difficulty, i.NoCheck})
-}
-
-func (i *Check) SetPath(filepath string) error {
-	if p := strings.Split(filepath, "/"); len(p) != 5 || p[0] != "" || p[3] != checksPath {
-		return ErrInvalid
-	}
-	i.Id = path.Base(filepath)
-	return nil
 }
 
 func (i *Check) SetContents(contents string) error {

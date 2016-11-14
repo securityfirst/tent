@@ -58,12 +58,12 @@ type Repo struct {
 	ticker     *time.Ticker
 }
 
-func (r *Repo) Tree() interface{} {
+func (r *Repo) Tree(locale string) interface{} {
 	r.RLock()
 	defer r.RUnlock()
 	var s = make([]interface{}, 0, len(r.categories))
 	for _, i := range r.Categories() {
-		s = append(s, r.Category(i).Tree())
+		s = append(s, r.Category(i, locale).Tree())
 	}
 	return s
 }
@@ -157,11 +157,12 @@ func (r *Repo) Get(c component.Component) (string, error) {
 	return f.Contents()
 }
 
-func (r *Repo) Category(cat string) *component.Category {
+func (r *Repo) Category(cat, locale string) *component.Category {
 	r.RLock()
 	defer r.RUnlock()
+
 	for _, c := range r.categories {
-		if c.Id == cat {
+		if c.Id == cat && c.Locale == locale {
 			return c
 		}
 	}

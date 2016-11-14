@@ -49,15 +49,15 @@ func newCmp(path string) (Component, error) {
 	var c Component
 	p := strings.Split(path, "/")
 	switch l := len(p); l {
-	case 3:
-		c = &Category{}
 	case 4:
-		if p[3] == suffixMeta {
+		c = &Category{}
+	case 5:
+		if p[4] == suffixMeta {
 			c = &Subcategory{}
 		} else {
 			c = &Item{}
 		}
-	case 5:
+	case 6:
 		c = &Check{}
 	default:
 		return nil, ErrInvalid
@@ -88,34 +88,42 @@ func (t *TreeParser) Parse(iter *git.FileIter) error {
 	return nil
 }
 
+type parseError struct {
+	file  string
+	phase string
+	err   interface{}
+}
+
+func (p parseError) Error() string { return fmt.Sprintf("[%s]%s - %v", p.phase, p.file, p.err) }
+
 func (t *TreeParser) parseFile(f *git.File) error {
 	contents, err := f.Contents()
 	if err != nil {
-		return err
+		return parseError{f.Name, "read", err}
 	}
 	cmp, err := newCmp("/" + f.Name)
 	if err != nil {
-		return err
+		return parseError{f.Name, "cmp", err}
 	}
 	p := strings.Split(f.Name, "/")
 	switch c := cmp.(type) {
 	case *Category:
-		t.index[p[0]] = len(t.Categories)
+		t.index[p[1]] = len(t.Categories)
 		t.Categories = append(t.Categories, c)
 	case *Subcategory:
-		t.Categories[t.index[p[0]]].Add(c)
+		t.Categories[t.index[p[1]]].Add(c)
 	case *Item:
-		t.Categories[t.index[p[0]]].Sub(p[1]).AddItem(c)
+		t.Categories[t.index[p[1]]].Sub(p[2]).AddItem(c)
 	case *Check:
-		t.Categories[t.index[p[0]]].Sub(p[1]).AddCheck(c)
+		t.Categories[t.index[p[1]]].Sub(p[2]).AddCheck(c)
 	default:
-		return fmt.Errorf("%s - Invalid Path", f.Name)
+		return parseError{f.Name, "type", "Invalid Path"}
 	}
 	if err := cmp.SetPath("/" + f.Name); err != nil {
-		return fmt.Errorf("%s - Path: %s", f.Name, err)
+		return parseError{f.Name, "path", err}
 	}
 	if err := cmp.SetContents(contents); err != nil {
-		return fmt.Errorf("%s - Content: %s", f.Name, err)
+		return parseError{f.Name, "contents", err}
 	}
 	return nil
 }
