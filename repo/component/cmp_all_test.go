@@ -16,7 +16,7 @@ var _ = Suite(&CmpSuite{})
 type CmpSuite struct{}
 
 func (*CmpSuite) TestParse(c *C) {
-	r, err := git.NewRepository(repoAddress("secirutyfirst", "octo-content"), nil)
+	r, err := git.NewRepository(repoAddress("securityfirst", "octo-content"), nil)
 	c.Assert(err, IsNil)
 	err = r.PullDefault()
 	c.Assert(err, IsNil)
@@ -24,20 +24,19 @@ func (*CmpSuite) TestParse(c *C) {
 	c.Assert(err, IsNil)
 	commit, err := r.Commit(hash)
 	c.Assert(err, IsNil)
-	m, err := ParseTree(commit.Tree().Files())
+	err = (&TreeParser{}).Parse(commit.Tree().Files())
 	c.Assert(err, IsNil)
-	c.Assert(m, Not(HasLen), 0)
 }
 
 func (*CmpSuite) TestCategory(c *C) {
 	var v Category
-	c.Assert(v.SetPath("/path"), Equals, ErrInvalid)
-	c.Assert(v.SetPath("/path/.metadata"), IsNil)
+	c.Assert(v.SetPath("/contents_en/path"), Equals, ErrInvalid)
+	c.Assert(v.SetPath("/contents_en/path/.metadata"), IsNil)
 	c.Assert(v.Id, Equals, "path")
 	c.Assert(v.SetContents("contents"), Equals, ErrInvalid)
 	c.Assert(v.SetContents("Name:Test"), IsNil)
 	c.Assert(v.Name, Equals, "Test")
-	c.Assert(v.Path(), Equals, "/path/.metadata")
+	c.Assert(v.Path(), Equals, "/contents_en/path/.metadata")
 	c.Assert(v.Contents(), Equals, "Name:Test")
 }
 
@@ -46,18 +45,18 @@ func (*CmpSuite) TestSubcategory(c *C) {
 		v Category
 		s Subcategory
 	)
-	v.SetPath("/path/.metadata")
+	v.SetPath("/contents_en/path/.metadata")
 	v.SetContents("Name:Test")
 	v.Add(&s)
 
-	c.Assert(s.SetPath("/path"), Equals, ErrInvalid)
-	c.Assert(s.SetPath("/path/sub"), Equals, ErrInvalid)
-	c.Assert(s.SetPath("/path/sub/.metadata"), IsNil)
+	c.Assert(s.SetPath("/contents_en/path"), Equals, ErrInvalid)
+	c.Assert(s.SetPath("/contents_en/path/sub"), Equals, ErrInvalid)
+	c.Assert(s.SetPath("/contents_en/path/sub/.metadata"), IsNil)
 	c.Assert(s.Id, Equals, "sub")
 	c.Assert(s.SetContents("contents"), Equals, ErrInvalid)
 	c.Assert(s.SetContents("Name:SubTest"), IsNil)
 	c.Assert(s.Name, Equals, "SubTest")
-	c.Assert(s.Path(), Equals, "/path/sub/.metadata")
+	c.Assert(s.Path(), Equals, "/contents_en/path/sub/.metadata")
 	c.Assert(s.Contents(), Equals, "Name:SubTest")
 }
 
@@ -67,22 +66,22 @@ func (*CmpSuite) TestItem(c *C) {
 		s Subcategory
 		i Item
 	)
-	v.SetPath("/path/.metadata")
+	v.SetPath("/contents_en/path/.metadata")
 	v.SetContents("Name:Test")
 	v.Add(&s)
-	s.SetPath("/path/sub/.metadata")
+	s.SetPath("/contents_en/path/sub/.metadata")
 	s.SetContents("Name:SubTest")
 	s.AddItem(&i)
 
-	c.Assert(i.SetPath("/path"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub/.metadata"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub/filename"), IsNil)
+	c.Assert(i.SetPath("/contents_en/path"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub/.metadata"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub/filename"), IsNil)
 	c.Assert(i.SetContents("contents"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\n---\nBody"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\nDifficulty:easy"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\nDifficulty:easy\n---\nBody"), IsNil)
-	c.Assert(i.Path(), Equals, "/path/sub/filename")
+	c.Assert(i.Path(), Equals, "/contents_en/path/sub/filename")
 	c.Assert(i.Contents(), Equals, "Title:Title\nDifficulty:easy\n---\nBody")
 }
 
@@ -92,23 +91,23 @@ func (*CmpSuite) TestCheck(c *C) {
 		s Subcategory
 		i Check
 	)
-	v.SetPath("/path/.metadata")
+	v.SetPath("/contents_en/path/.metadata")
 	v.SetContents("Name:Test")
 	v.Add(&s)
-	s.SetPath("/path/sub/.metadata")
+	s.SetPath("/contents_en/path/sub/.metadata")
 	s.SetContents("Name:SubTest")
 	s.AddCheck(&i)
 
-	c.Assert(i.SetPath("/path"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub/.metadata"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub/filename"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/path/sub/checks/filename"), IsNil)
+	c.Assert(i.SetPath("/contents_en/path"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub/.metadata"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub/filename"), Equals, ErrInvalid)
+	c.Assert(i.SetPath("/contents_en/path/sub/checks/filename"), IsNil)
 	c.Assert(i.SetContents("contents"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\n---\nBody"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\nDifficulty:easy"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\nText:text\nDifficulty:easy\nNoCheck:true"), IsNil)
-	c.Assert(i.Path(), Equals, "/path/sub/checks/filename")
+	c.Assert(i.Path(), Equals, "/contents_en/path/sub/checks/filename")
 	c.Assert(i.Contents(), Equals, "Title:Title\nText:text\nDifficulty:easy\nNoCheck:true")
 }
 
@@ -118,23 +117,23 @@ func (*CmpSuite) TestNew(c *C) {
 		err error
 	)
 
-	v, err = New("/path")
+	v, err = newCmp("/contents_en/path")
 	c.Assert(err, Equals, ErrInvalid)
 	c.Assert(v, IsNil)
 
-	v, err = New("/path/.metadata")
+	v, err = newCmp("/contents_en/path/.metadata")
 	c.Assert(err, IsNil)
-	c.Assert(v, DeepEquals, &Category{Id: "path"})
+	c.Assert(v, DeepEquals, &Category{Id: "path", Locale: "en"})
 
-	v, err = New("/path/sub/.metadata")
+	v, err = newCmp("/contents_en/path/sub/.metadata")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Subcategory{Id: "sub"})
 
-	v, err = New("/path/sub/item")
+	v, err = newCmp("/contents_en/path/sub/item")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Item{Id: "item"})
 
-	v, err = New("/path/sub/checks/check")
+	v, err = newCmp("/contents_en/path/sub/checks/check")
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Check{Id: "check"})
 }

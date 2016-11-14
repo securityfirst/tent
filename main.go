@@ -40,9 +40,13 @@ func main() {
 	r.StartSync(10*time.Minute, hookChan)
 	hookChan <- struct{}{} // Force first update
 
+	h := r.Handler()
+
 	engine := auth.NewEngine(conf, gin.Default())
 
-	authorized := engine.Use(func(c *gin.Context) {
+	engine.GET("/api/tree", h.ParseLocale, h.Tree)
+
+	authorized := engine.Use(h.ParseLocale, func(c *gin.Context) {
 		user := engine.GetUser(c)
 		if user != nil {
 			c.Set("user", user)
@@ -52,7 +56,6 @@ func main() {
 		c.Abort()
 	})
 
-	h := r.Handler()
 	authorized.GET("/", h.Info)
 	authorized.GET("/api/repo", h.Root)
 	authorized.GET("/api/repo/update", func(*gin.Context) { hookChan <- struct{}{} })

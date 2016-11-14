@@ -3,8 +3,7 @@ package component
 import (
 	"encoding/json"
 	"fmt"
-	"path"
-	"strings"
+	"regexp"
 )
 
 type Subcategory struct {
@@ -18,6 +17,14 @@ type Subcategory struct {
 
 func (s *Subcategory) HasChildren() bool {
 	return len(s.items) != 0
+}
+
+func (s *Subcategory) Tree() interface{} {
+	return map[string]interface{}{
+		"name":   s.Name,
+		"items":  s.items,
+		"checks": s.checks,
+	}
 }
 
 func (s *Subcategory) SHA() string {
@@ -88,20 +95,27 @@ func (s *Subcategory) Check(id string) *Check {
 	return nil
 }
 
+func (s *Subcategory) basePath() string {
+	return s.parent.basePath() + "/" + s.Id
+}
+
 func (s *Subcategory) Path() string {
-	return fmt.Sprintf("/%s/%s/.metadata", s.parent.Id, s.Id)
+	return fmt.Sprintf("%s/.metadata", s.basePath())
+}
+
+var subPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/([^/]+)/.metadata")
+
+func (s *Subcategory) SetPath(filepath string) error {
+	p := subPath.FindStringSubmatch(filepath)
+	if len(p) == 0 {
+		return ErrInvalid
+	}
+	s.Id = p[1]
+	return nil
 }
 
 func (s *Subcategory) Contents() string {
 	return getMeta(categoryOrder, args{s.Name})
-}
-
-func (s *Subcategory) SetPath(filepath string) error {
-	if p := strings.Split(filepath, "/"); len(p) != 4 || p[0] != "" || p[3] != suffixMeta {
-		return ErrInvalid
-	}
-	s.Id = path.Base(path.Dir(filepath))
-	return nil
 }
 
 func (s *Subcategory) SetContents(contents string) error {

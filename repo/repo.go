@@ -54,8 +54,18 @@ type Repo struct {
 	conf       *oauth2.Config
 	repo       *git.Repository
 	commit     *git.Commit
-	categories map[string]*component.Category
+	categories []*component.Category
 	ticker     *time.Ticker
+}
+
+func (r *Repo) Tree(locale string) interface{} {
+	r.RLock()
+	defer r.RUnlock()
+	var s = make([]interface{}, 0, len(r.categories))
+	for _, i := range r.Categories() {
+		s = append(s, r.Category(i, locale).Tree())
+	}
+	return s
 }
 
 func (r *Repo) client(u *models.User) *github.Client {
@@ -122,8 +132,12 @@ func (r *Repo) pull() error {
 	if err != nil {
 		return err
 	}
-	r.categories, err = component.ParseTree(r.commit.Tree().Files())
-	return err
+	var parser component.TreeParser
+	if err := parser.Parse(r.commit.Tree().Files()); err != nil {
+		return err
+	}
+	r.categories = parser.Categories
+	return nil
 }
 
 func (r *Repo) file(c component.Component) (*git.File, error) {
@@ -143,10 +157,16 @@ func (r *Repo) Get(c component.Component) (string, error) {
 	return f.Contents()
 }
 
-func (r *Repo) Category(cat string) *component.Category {
+func (r *Repo) Category(cat, locale string) *component.Category {
 	r.RLock()
 	defer r.RUnlock()
-	return r.categories[cat]
+
+	for _, c := range r.categories {
+		if c.Id == cat && c.Locale == locale {
+			return c
+		}
+	}
+	return nil
 }
 
 func (r *Repo) Categories() []string {
