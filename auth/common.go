@@ -24,7 +24,6 @@ type HandleConf struct {
 type Config struct {
 	Id        string
 	Secret    string
-	Port      int
 	OAuthHost string
 	Host      string
 	Login     HandleConf
