@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -21,24 +20,20 @@ const (
 const randomString = "horse battery staple"
 
 // NewEngine creates a new Engine using and adds the handle for authentication
-func NewEngine(c Config, engine *gin.Engine) *Engine {
-	var e = Engine{
-		Engine:   engine,
-		config:   c.OAuth(),
-		port:     c.Port,
-		sessions: sessions.NewCookieStore([]byte(randomString), nil),
-	}
-	c.Login.Redirect = e.config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
-	e.GET(c.Login.Endpoint, func(g *gin.Context) {
+func NewEngine(c Config, root *gin.RouterGroup) *Engine {
+	var e = Engine{sessions: sessions.NewCookieStore([]byte(randomString), nil)}
+	config := c.OAuth()
+	c.Login.Redirect = config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
+	root.GET(c.Login.Endpoint, func(g *gin.Context) {
 		g.Redirect(http.StatusTemporaryRedirect, c.Login.Redirect)
 	})
-	e.GET(c.Logout.Endpoint, func(g *gin.Context) {
+	root.GET(c.Logout.Endpoint, func(g *gin.Context) {
 		if err := e.destoySession(g); err != nil {
 			log.Println("Error while invalidating the session:", err)
 		}
 		g.Redirect(http.StatusTemporaryRedirect, c.Logout.Redirect)
 	})
-	e.GET(c.Callback.Endpoint, func(g *gin.Context) {
+	root.GET(c.Callback.Endpoint, func(g *gin.Context) {
 		if errString := g.Query("error"); errString != "" {
 			log.Printf("Service responded with error: %s", errString)
 			return
@@ -50,7 +45,7 @@ func NewEngine(c Config, engine *gin.Engine) *Engine {
 			return
 		}
 		code := g.Query("code")
-		token, err := e.config.Exchange(oauth2.NoContext, code)
+		token, err := config.Exchange(oauth2.NoContext, code)
 		if err != nil {
 			log.Printf("Cannot get Token: %s", err)
 			g.Redirect(http.StatusTemporaryRedirect, "/")
@@ -76,15 +71,10 @@ func NewEngine(c Config, engine *gin.Engine) *Engine {
 
 // Engine is e struct that eases Github OAuth and resource handling
 type Engine struct {
-	*gin.Engine
+	root     *gin.RouterGroup
 	config   *oauth2.Config
 	port     int
 	sessions *sessions.CookieStore
-}
-
-// Run starts the configuration address
-func (e *Engine) Run() {
-	e.Engine.Run(fmt.Sprint(":", e.port))
 }
 
 func (e *Engine) createSession(c *gin.Context, u *models.User) error {
