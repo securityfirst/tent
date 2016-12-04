@@ -31,9 +31,9 @@ const (
 )
 
 var (
-	categoryOrder = []string{"Name:"}
-	itemOrder     = []string{"Title:", "Difficulty:"}
-	checkOrder    = []string{"Title:", "Text:", "Difficulty:", "NoCheck:"}
+	categoryOrder = []string{"Name:", "Order:"}
+	itemOrder     = []string{"Title:", "Difficulty:", "Order:"}
+	checkOrder    = []string{"Title:", "Text:", "Difficulty:", "NoCheck:", "Order:"}
 )
 
 type Component interface {
@@ -167,6 +167,12 @@ func setMeta(meta string, order []string, pointers args) error {
 			*pointer = v == "true"
 		case *int:
 			n, err := strconv.Atoi(v)
+			if err != nil {
+				return ErrInvalid
+			}
+			*pointer = n
+		case *float64:
+			n, err := strconv.ParseFloat(v, 64)
 			if err != nil {
 				return ErrInvalid
 			}

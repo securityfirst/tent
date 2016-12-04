@@ -8,9 +8,10 @@ import (
 
 type Subcategory struct {
 	parent *Category
-	Id     string `json:"-"`
-	Name   string `json:"name"`
-	Hash   string `json:"hash"`
+	Id     string  `json:"-"`
+	Name   string  `json:"name"`
+	Hash   string  `json:"hash"`
+	Order  float64 `json:"-"`
 	items  []*Item
 	checks []*Check
 }
@@ -115,12 +116,12 @@ func (s *Subcategory) SetPath(filepath string) error {
 }
 
 func (s *Subcategory) Contents() string {
-	return getMeta(categoryOrder, args{s.Name})
+	return getMeta(categoryOrder, args{s.Name, s.Order})
 }
 
 func (s *Subcategory) SetContents(contents string) error {
 	if err := checkMeta(contents, categoryOrder); err != nil {
 		return err
 	}
-	return setMeta(contents, categoryOrder, args{&s.Name})
+	return setMeta(contents, categoryOrder, args{&s.Name, &s.Order})
 }
