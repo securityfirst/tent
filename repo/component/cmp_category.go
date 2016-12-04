@@ -7,10 +7,11 @@ import (
 )
 
 type Category struct {
-	Id            string `json:"-"`
-	Name          string `json:"name"`
-	Hash          string `json:"hash"`
-	Locale        string `json:"-"`
+	Id            string  `json:"-"`
+	Name          string  `json:"name"`
+	Hash          string  `json:"hash"`
+	Locale        string  `json:"-"`
+	Order         float64 `json:"-"`
 	subcategories []*Subcategory
 }
 
@@ -93,12 +94,12 @@ func (c *Category) SetPath(filepath string) error {
 }
 
 func (c *Category) Contents() string {
-	return getMeta(categoryOrder, args{c.Name})
+	return getMeta(categoryOrder, args{c.Name, c.Order})
 }
 
 func (c *Category) SetContents(contents string) error {
 	if err := checkMeta(contents, categoryOrder); err != nil {
 		return err
 	}
-	return setMeta(contents, categoryOrder, args{&c.Name})
+	return setMeta(contents, categoryOrder, args{&c.Name, &c.Order})
 }

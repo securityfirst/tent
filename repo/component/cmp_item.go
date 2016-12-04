@@ -8,11 +8,12 @@ import (
 
 type Item struct {
 	parent     *Subcategory
-	Id         string `json:"-"`
-	Hash       string `json:"hash"`
-	Difficulty string `json:"difficulty"`
-	Title      string `json:"title"`
-	Body       string `json:"body"`
+	Id         string  `json:"-"`
+	Hash       string  `json:"hash"`
+	Difficulty string  `json:"difficulty"`
+	Title      string  `json:"title"`
+	Body       string  `json:"body"`
+	Order      float64 `json:"-"`
 }
 
 func (i *Item) SetParent(s *Subcategory) {
@@ -43,7 +44,7 @@ func (i *Item) SetPath(filepath string) error {
 }
 
 func (i *Item) Contents() string {
-	return fmt.Sprint(getMeta(itemOrder, args{i.Title, i.Difficulty}), bodySeparator, i.Body)
+	return fmt.Sprint(getMeta(itemOrder, args{i.Title, i.Difficulty, i.Order}), bodySeparator, i.Body)
 }
 
 func (i *Item) SetContents(contents string) error {
@@ -58,6 +59,6 @@ func (i *Item) SetContents(contents string) error {
 	return setMeta(
 		parts[0],
 		itemOrder,
-		[]interface{}{&i.Title, &i.Difficulty},
+		[]interface{}{&i.Title, &i.Difficulty, &i.Order},
 	)
 }

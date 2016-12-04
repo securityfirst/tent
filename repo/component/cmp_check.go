@@ -7,12 +7,13 @@ import (
 
 type Check struct {
 	parent     *Subcategory
-	Id         string `json:"-"`
-	Hash       string `json:"hash"`
-	Difficulty string `json:"difficulty"`
-	Title      string `json:"title"`
-	Text       string `json:"text"`
-	NoCheck    bool   `json:"no_check"`
+	Id         string  `json:"-"`
+	Hash       string  `json:"hash"`
+	Difficulty string  `json:"difficulty"`
+	Title      string  `json:"title"`
+	Text       string  `json:"text"`
+	NoCheck    bool    `json:"no_check"`
+	Order      float64 `json:"-"`
 }
 
 func (i *Check) SetParent(s *Subcategory) {
@@ -43,12 +44,12 @@ func (i *Check) SetPath(filepath string) error {
 }
 
 func (i *Check) Contents() string {
-	return getMeta(checkOrder, args{i.Title, i.Text, i.Difficulty, i.NoCheck})
+	return getMeta(checkOrder, args{i.Title, i.Text, i.Difficulty, i.NoCheck, i.Order})
 }
 
 func (i *Check) SetContents(contents string) error {
 	if err := checkMeta(contents, checkOrder); err != nil {
 		return err
 	}
-	return setMeta(contents, checkOrder, args{&i.Title, &i.Text, &i.Difficulty, &i.NoCheck})
+	return setMeta(contents, checkOrder, args{&i.Title, &i.Text, &i.Difficulty, &i.NoCheck, &i.Order})
 }

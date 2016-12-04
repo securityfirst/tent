@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -31,9 +32,9 @@ const (
 )
 
 var (
-	categoryOrder = []string{"Name:"}
-	itemOrder     = []string{"Title:", "Difficulty:"}
-	checkOrder    = []string{"Title:", "Text:", "Difficulty:", "NoCheck:"}
+	categoryOrder = []string{"Name:", "Order:"}
+	itemOrder     = []string{"Title:", "Difficulty:", "Order:"}
+	checkOrder    = []string{"Title:", "Text:", "Difficulty:", "NoCheck:", "Order:"}
 )
 
 type Component interface {
@@ -81,8 +82,19 @@ func (t *TreeParser) Parse(iter *git.FileIter) error {
 			}
 			return err
 		}
+		if f.Name == "LICENSE" || strings.ToLower(f.Name) == "readme.md" {
+			continue
+		}
 		if err := t.parseFile(f); err != nil {
 			return err
+		}
+	}
+	sort.Sort(catSorter(t.Categories))
+	for i := range t.Categories {
+		sort.Sort(subSorter(t.Categories[i].subcategories))
+		for j := range t.Categories[i].subcategories {
+			sort.Sort(itemSorter(t.Categories[i].subcategories[j].items))
+			sort.Sort(checkSorter(t.Categories[i].subcategories[j].checks))
 		}
 	}
 	return nil
@@ -167,6 +179,12 @@ func setMeta(meta string, order []string, pointers args) error {
 			*pointer = v == "true"
 		case *int:
 			n, err := strconv.Atoi(v)
+			if err != nil {
+				return ErrInvalid
+			}
+			*pointer = n
+		case *float64:
+			n, err := strconv.ParseFloat(v, 64)
 			if err != nil {
 				return ErrInvalid
 			}
