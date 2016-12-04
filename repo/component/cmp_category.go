@@ -11,7 +11,7 @@ type Category struct {
 	Name          string  `json:"name"`
 	Hash          string  `json:"hash"`
 	Locale        string  `json:"-"`
-	Order         float64 `json:"-`
+	Order         float64 `json:"-"`
 	subcategories []*Subcategory
 }
 

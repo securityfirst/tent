@@ -13,7 +13,7 @@ type Item struct {
 	Difficulty string  `json:"difficulty"`
 	Title      string  `json:"title"`
 	Body       string  `json:"body"`
-	Order      float64 `json:"-`
+	Order      float64 `json:"-"`
 }
 
 func (i *Item) SetParent(s *Subcategory) {

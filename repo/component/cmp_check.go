@@ -13,7 +13,7 @@ type Check struct {
 	Title      string  `json:"title"`
 	Text       string  `json:"text"`
 	NoCheck    bool    `json:"no_check"`
-	Order      float64 `json:"-`
+	Order      float64 `json:"-"`
 }
 
 func (i *Check) SetParent(s *Subcategory) {

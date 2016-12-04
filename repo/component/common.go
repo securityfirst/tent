@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -81,8 +82,19 @@ func (t *TreeParser) Parse(iter *git.FileIter) error {
 			}
 			return err
 		}
+		if f.Name == "LICENSE" || strings.ToLower(f.Name) == "readme.md" {
+			continue
+		}
 		if err := t.parseFile(f); err != nil {
 			return err
+		}
+	}
+	sort.Sort(catSorter(t.Categories))
+	for i := range t.Categories {
+		sort.Sort(subSorter(t.Categories[i].subcategories))
+		for j := range t.Categories[i].subcategories {
+			sort.Sort(itemSorter(t.Categories[i].subcategories[j].items))
+			sort.Sort(checkSorter(t.Categories[i].subcategories[j].checks))
 		}
 	}
 	return nil
