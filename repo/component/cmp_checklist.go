@@ -15,7 +15,6 @@ type Checklist struct {
 
 type Check struct {
 	Difficulty string `json:"difficulty"`
-	Title      string `json:"title"`
 	Text       string `json:"text"`
 	NoCheck    bool   `json:"no_check"`
 }
