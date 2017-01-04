@@ -41,8 +41,8 @@ func (r *RepoHandler) cmp(c *gin.Context) component.Component {
 			if v, ok := c.Get("item"); ok {
 				cmp = v.(*component.Item)
 			}
-			if v, ok := c.Get("check"); ok {
-				cmp = v.(*component.Check)
+			if v, ok := c.Get("checks"); ok {
+				cmp = v.(*component.Checklist)
 			}
 		}
 	}
@@ -65,8 +65,8 @@ func (r *RepoHandler) item(c *gin.Context) *component.Item {
 	return c.MustGet("item").(*component.Item)
 }
 
-func (r *RepoHandler) check(c *gin.Context) *component.Check {
-	return c.MustGet("check").(*component.Check)
+func (r *RepoHandler) checks(c *gin.Context) *component.Checklist {
+	return c.MustGet("checks").(*component.Checklist)
 }
 
 func (r *RepoHandler) locale(c *gin.Context) string {
@@ -100,10 +100,6 @@ func (r *RepoHandler) IsNew(c *gin.Context) {
 		if item := r.sub(c).Item(t.Id); item != nil {
 			cmp = item
 		}
-	case *component.Check:
-		if check := r.sub(c).Check(t.Id); check != nil {
-			cmp = check
-		}
 	}
 	if cmp != nil {
 		r.err(c, http.StatusConflict, ErrExists)
@@ -123,10 +119,6 @@ func (r *RepoHandler) CanDelete(c *gin.Context) {
 		}
 	case *component.Item:
 		if item := r.sub(c).Item(t.Id); item != nil {
-			cmp = item
-		}
-	case *component.Check:
-		if item := r.sub(c).Check(t.Id); item != nil {
 			cmp = item
 		}
 	}
@@ -207,24 +199,18 @@ func (r *RepoHandler) ParseItem(c *gin.Context) {
 
 func (r *RepoHandler) SetCheck(c *gin.Context) {
 	r.SetSub(c)
-	check := r.sub(c).Check(c.Param("check"))
-	if check == nil {
-		r.err(c, http.StatusNotFound, ErrNotFound)
-		return
-	}
-	c.Set("check", check)
+	c.Set("checks", r.sub(c).Checks())
 }
 
 func (r *RepoHandler) ParseCheck(c *gin.Context) {
 	r.SetSub(c)
-	var check component.Check
+	var check component.Checklist
 	if err := c.BindJSON(&check); err != nil {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
 	check.SetParent(r.sub(c))
-	check.Id = c.Param("check")
-	c.Set("check", &check)
+	c.Set("checks", &check)
 }
 
 func (r *RepoHandler) Info(c *gin.Context) {
@@ -264,7 +250,7 @@ func (r *RepoHandler) Show(c *gin.Context) {
 		v := *t
 		v.Hash = hash
 		out = &v
-	case *component.Check:
+	case *component.Checklist:
 		v := *t
 		v.Hash = hash
 		out = &v

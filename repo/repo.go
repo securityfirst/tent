@@ -133,7 +133,7 @@ func (r *Repo) pull() error {
 		return err
 	}
 	var parser component.TreeParser
-	if err := parser.Parse(r.commit.Tree().Files()); err != nil {
+	if err := parser.Parse(r.commit.Tree()); err != nil {
 		return err
 	}
 	r.categories = parser.Categories

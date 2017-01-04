@@ -18,7 +18,7 @@ const (
 	pathCategory    = "/api/repo/category/:cat"
 	pathSubcategory = "/api/repo/category/:cat/:sub"
 	pathItem        = "/api/repo/category/:cat/:sub/item/:item"
-	pathCheck       = "/api/repo/category/:cat/:sub/check/:check"
+	pathCheck       = "/api/repo/category/:cat/:sub/checks"
 )
 
 func New(r *repo.Repo) *Octo {
@@ -72,8 +72,6 @@ func (o *Octo) Register(root *gin.RouterGroup, c auth.Config) {
 
 	authorized.GET(pathCheck, h.SetCheck, h.Show)
 	authorized.PUT(pathCheck, h.ParseCheck, h.Update)
-	authorized.DELETE(pathCheck, h.ParseCheck, h.CanDelete, h.Delete)
-	authorized.POST(pathCheck, h.ParseCheck, h.IsNew, h.Create)
 
 	o.repo.StartSync(10*time.Minute, hookCh)
 	// Force first update

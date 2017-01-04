@@ -17,9 +17,3 @@ type itemSorter []*Item
 func (s itemSorter) Len() int           { return len(s) }
 func (s itemSorter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s itemSorter) Less(i, j int) bool { return s[i].Order < s[j].Order }
-
-type checkSorter []*Check
-
-func (s checkSorter) Len() int           { return len(s) }
-func (s checkSorter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s checkSorter) Less(i, j int) bool { return s[i].Order < s[j].Order }
