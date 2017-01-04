@@ -134,6 +134,7 @@ func (r *Repo) pull() error {
 	}
 	var parser component.TreeParser
 	if err := parser.Parse(r.commit.Tree()); err != nil {
+		log.Println("Parsing failed:", err)
 		return err
 	}
 	r.categories = parser.Categories

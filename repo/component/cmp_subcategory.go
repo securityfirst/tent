@@ -24,7 +24,7 @@ func (s *Subcategory) Tree() interface{} {
 	return map[string]interface{}{
 		"name":   s.Name,
 		"items":  s.items,
-		"checks": s.checklist,
+		"checks": s.checklist.Checks,
 	}
 }
 

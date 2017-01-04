@@ -31,7 +31,7 @@ func init() {
 
 func main() {
 	e := gin.Default()
-	r, err := repo.New("klaidliadon", "octo-content", conf.OAuth())
+	r, err := repo.New("securityfirst", "octo-content", conf.OAuth())
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}

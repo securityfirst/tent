@@ -58,6 +58,12 @@ func (c *Checklist) Contents() string {
 }
 
 func (c *Checklist) SetContents(contents string) error {
+	if contents == "" {
+		if c.Checks != nil {
+			c.Checks = c.Checks[:0]
+		}
+		return nil
+	}
 	parts := strings.Split(contents, bodySeparator)
 	var checks = make([]Check, len(parts))
 	for i, v := range parts {

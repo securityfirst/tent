@@ -85,11 +85,9 @@ func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
 			}
 			return err
 		}
-
 		if filter != nil && !filter(strings.ToLower(f.Name)) {
 			continue
 		}
-		fmt.Println(f.Name)
 		if err := t.parseFile(f); err != nil {
 			return err
 		}
@@ -101,12 +99,16 @@ func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
 func (t *TreeParser) Parse(tree *git.Tree) error {
 	t.index = make(map[string]int)
 	t.Categories = make([]*Category, 0)
-	t.parse(tree, func(name string) bool {
+	if err := t.parse(tree, func(name string) bool {
 		return strings.HasSuffix(name, suffixMeta)
-	})
-	t.parse(tree, func(name string) bool {
-		return !strings.HasSuffix(name, suffixMeta) && name != "license" && name == "readme.md"
-	})
+	}); err != nil {
+		return err
+	}
+	if err := t.parse(tree, func(name string) bool {
+		return !strings.HasSuffix(name, suffixMeta) && name != "license" && name != "readme.md"
+	}); err != nil {
+		return err
+	}
 	sort.Sort(catSorter(t.Categories))
 	for i := range t.Categories {
 		sort.Sort(subSorter(t.Categories[i].subcategories))

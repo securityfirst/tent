@@ -9,7 +9,7 @@ import (
 type Item struct {
 	parent     *Subcategory
 	Id         string  `json:"-"`
-	Hash       string  `json:"hash"`
+	Hash       string  `json:"hash,omitempty"`
 	Difficulty string  `json:"difficulty"`
 	Title      string  `json:"title"`
 	Body       string  `json:"body"`
