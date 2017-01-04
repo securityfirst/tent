@@ -24,7 +24,7 @@ func (*CmpSuite) TestParse(c *C) {
 	c.Assert(err, IsNil)
 	commit, err := r.Commit(hash)
 	c.Assert(err, IsNil)
-	err = (&TreeParser{}).Parse(commit.Tree().Files())
+	err = (&TreeParser{}).Parse(commit.Tree())
 	c.Assert(err, IsNil)
 }
 
@@ -87,30 +87,35 @@ func (*CmpSuite) TestItem(c *C) {
 	c.Assert(i.Contents(), Equals, "Title:Title\nDifficulty:easy\nOrder:1\n---\nBody")
 }
 
-func (*CmpSuite) TestCheck(c *C) {
+func (*CmpSuite) TestChecks(c *C) {
 	var (
 		v Category
 		s Subcategory
-		i Check
+		i Checklist
 	)
 	v.SetPath("/contents_en/path/.metadata")
 	v.SetContents("Name:Test\nOrder:1")
 	v.Add(&s)
 	s.SetPath("/contents_en/path/sub/.metadata")
 	s.SetContents("Name:SubTest\nOrder:1")
-	s.AddCheck(&i)
+	s.SetChecks(&i)
 
 	c.Assert(i.SetPath("/contents_en/path"), Equals, ErrInvalid)
 	c.Assert(i.SetPath("/contents_en/path/sub"), Equals, ErrInvalid)
 	c.Assert(i.SetPath("/contents_en/path/sub/.metadata"), Equals, ErrInvalid)
 	c.Assert(i.SetPath("/contents_en/path/sub/filename"), Equals, ErrInvalid)
-	c.Assert(i.SetPath("/contents_en/path/sub/checks/filename"), IsNil)
+	c.Assert(i.SetPath("/contents_en/path/sub/.checks"), IsNil)
 	c.Assert(i.SetContents("contents"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\n---\nBody"), Equals, ErrInvalid)
 	c.Assert(i.SetContents("Title:Title\nDifficulty:easy\nOrder:1"), Equals, ErrInvalid)
-	c.Assert(i.SetContents("Title:Title\nText:text\nDifficulty:easy\nNoCheck:true\nOrder:1"), IsNil)
-	c.Assert(i.Path(), Equals, "/contents_en/path/sub/checks/filename")
-	c.Assert(i.Contents(), Equals, "Title:Title\nText:text\nDifficulty:easy\nNoCheck:true\nOrder:1")
+	c.Assert(i.SetContents("Title:Title\nText:text\nDifficulty:easy\nNoCheck:true"), Equals, ErrInvalid)
+	c.Assert(i.SetContents("Text:text\nDifficulty:easy\nNoCheck:true"), IsNil)
+	c.Assert(i.Path(), Equals, "/contents_en/path/sub/.checks")
+	c.Assert(i.Contents(), Equals, "Text:text\nDifficulty:easy\nNoCheck:true")
+	c.Assert(i.SetContents("Text:text\nDifficulty:easy\nNoCheck:true"+
+		bodySeparator+"Text:text\nDifficulty:easy\nNoCheck:true"), IsNil)
+	c.Assert(i.Contents(), Equals, "Text:text\nDifficulty:easy\nNoCheck:true"+
+		bodySeparator+"Text:text\nDifficulty:easy\nNoCheck:true")
 }
 
 func (*CmpSuite) TestNew(c *C) {
@@ -135,7 +140,7 @@ func (*CmpSuite) TestNew(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(v, DeepEquals, &Item{Id: "item"})
 
-	v, err = newCmp("/contents_en/path/sub/checks/check")
+	v, err = newCmp("/contents_en/path/sub/.checks")
 	c.Assert(err, IsNil)
-	c.Assert(v, DeepEquals, &Check{Id: "check"})
+	c.Assert(v, DeepEquals, &Checklist{})
 }

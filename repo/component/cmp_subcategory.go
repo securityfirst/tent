@@ -7,13 +7,13 @@ import (
 )
 
 type Subcategory struct {
-	parent *Category
-	Id     string  `json:"-"`
-	Name   string  `json:"name"`
-	Hash   string  `json:"hash"`
-	Order  float64 `json:"-"`
-	items  []*Item
-	checks []*Check
+	parent    *Category
+	Id        string  `json:"-"`
+	Name      string  `json:"name"`
+	Hash      string  `json:"hash"`
+	Order     float64 `json:"-"`
+	items     []*Item
+	checklist *Checklist
 }
 
 func (s *Subcategory) HasChildren() bool {
@@ -24,7 +24,7 @@ func (s *Subcategory) Tree() interface{} {
 	return map[string]interface{}{
 		"name":   s.Name,
 		"items":  s.items,
-		"checks": s.checks,
+		"checks": s.checklist,
 	}
 }
 
@@ -39,7 +39,7 @@ func (s *Subcategory) SetParent(c *Category) {
 func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
 		"name":   s.Name,
-		"items":  s.Items(),
+		"items":  s.ItemNames(),
 		"checks": s.Checks(),
 	}
 	if s.Hash != "" {
@@ -48,47 +48,63 @@ func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (s *Subcategory) Items() []string {
+func (s *Subcategory) Items() []Item {
+	var dst = make([]Item, len(s.items))
+	for i, v := range s.items {
+		dst[i] = *v
+	}
+	return dst
+}
+
+func (s *Subcategory) ItemNames() []string {
 	var r = make([]string, 0, len(s.items))
-	for _, v := range s.items {
-		r = append(r, v.Id)
+	for i := range s.items {
+		r = append(r, s.items[i].Id)
 	}
 	return r
 }
 
-func (s *Subcategory) Checks() []string {
-	var r = make([]string, 0, len(s.checks))
-	for _, v := range s.checks {
-		r = append(r, v.Id)
+func (s *Subcategory) Checks() *Checklist {
+	var dst []Check
+	if s.checklist == nil {
+		s.SetChecks(new(Checklist))
 	}
-	return r
+	dst = make([]Check, len(s.checklist.Checks))
+	for i, v := range s.checklist.Checks {
+		dst[i] = v
+	}
+	return &Checklist{
+		parent: s,
+		Hash:   s.checklist.Hash,
+		Checks: dst,
+	}
 }
 
-func (s *Subcategory) AddItem(items ...*Item) {
+func (s *Subcategory) AddChecks(c ...Check) {
+	if s.checklist == nil {
+		s.SetChecks(new(Checklist))
+	}
+	s.checklist.Add(c...)
+}
+
+func (s *Subcategory) SetChecks(c *Checklist) {
+	s.checklist = c
+	c.parent = s
+}
+
+func (s *Subcategory) AddItem(items ...*Item) error {
 	for _, v := range items {
+		if s.Item(v.Id) != nil {
+			return fmt.Errorf("item %s exists in %s/%s", v.Id, s.parent.Id, s.Id)
+		}
 		v.parent = s
 	}
 	s.items = append(s.items, items...)
+	return nil
 }
 
 func (s *Subcategory) Item(id string) *Item {
 	for _, v := range s.items {
-		if v.Id == id {
-			return v
-		}
-	}
-	return nil
-}
-
-func (s *Subcategory) AddCheck(checks ...*Check) {
-	for _, v := range checks {
-		v.parent = s
-	}
-	s.checks = append(s.checks, checks...)
-}
-
-func (s *Subcategory) Check(id string) *Check {
-	for _, v := range s.checks {
 		if v.Id == id {
 			return v
 		}
@@ -122,6 +138,9 @@ func (s *Subcategory) Contents() string {
 func (s *Subcategory) SetContents(contents string) error {
 	if err := checkMeta(contents, categoryOrder); err != nil {
 		return err
+	}
+	if s.checklist == nil {
+		s.checklist = new(Checklist)
 	}
 	return setMeta(contents, categoryOrder, args{&s.Name, &s.Order})
 }

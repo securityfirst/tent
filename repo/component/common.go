@@ -29,14 +29,16 @@ var ErrInvalid = errors.New("Invalid content")
 const (
 	bodySeparator = "\n---\n"
 	suffixMeta    = ".metadata"
+	suffixChecks  = ".checks"
 )
 
 var (
 	categoryOrder = []string{"Name:", "Order:"}
 	itemOrder     = []string{"Title:", "Difficulty:", "Order:"}
-	checkOrder    = []string{"Title:", "Text:", "Difficulty:", "NoCheck:", "Order:"}
+	checkOrder    = []string{"Text:", "Difficulty:", "NoCheck:"}
 )
 
+// A Component is en element of the resource tree
 type Component interface {
 	Path() string
 	Contents() string
@@ -53,28 +55,29 @@ func newCmp(path string) (Component, error) {
 	case 4:
 		c = &Category{}
 	case 5:
-		if p[4] == suffixMeta {
-			c = &Subcategory{}
-		} else {
-			c = &Item{}
+		switch p[4] {
+		case suffixMeta:
+			c = new(Subcategory)
+		case suffixChecks:
+			c = new(Checklist)
+		default:
+			c = new(Item)
 		}
-	case 6:
-		c = &Check{}
 	default:
 		return nil, ErrInvalid
 	}
 	return c, c.SetPath(path)
 }
 
+// TreeParser is an helper, creates a tree from the repo
 type TreeParser struct {
 	index      map[string]int
 	Categories []*Category
 }
 
-func (t *TreeParser) Parse(iter *git.FileIter) error {
-	t.index = make(map[string]int)
-	t.Categories = make([]*Category, 0)
-	for {
+// Parse executes the parsing on a repo
+func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
+	for iter := tree.Files(); ; {
 		f, err := iter.Next()
 		if err != nil {
 			if err == io.EOF {
@@ -82,19 +85,33 @@ func (t *TreeParser) Parse(iter *git.FileIter) error {
 			}
 			return err
 		}
-		if f.Name == "LICENSE" || strings.ToLower(f.Name) == "readme.md" {
+
+		if filter != nil && !filter(strings.ToLower(f.Name)) {
 			continue
 		}
+		fmt.Println(f.Name)
 		if err := t.parseFile(f); err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+// Parse executes the parsing on a repo
+func (t *TreeParser) Parse(tree *git.Tree) error {
+	t.index = make(map[string]int)
+	t.Categories = make([]*Category, 0)
+	t.parse(tree, func(name string) bool {
+		return strings.HasSuffix(name, suffixMeta)
+	})
+	t.parse(tree, func(name string) bool {
+		return !strings.HasSuffix(name, suffixMeta) && name != "license" && name == "readme.md"
+	})
 	sort.Sort(catSorter(t.Categories))
 	for i := range t.Categories {
 		sort.Sort(subSorter(t.Categories[i].subcategories))
 		for j := range t.Categories[i].subcategories {
 			sort.Sort(itemSorter(t.Categories[i].subcategories[j].items))
-			sort.Sort(checkSorter(t.Categories[i].subcategories[j].checks))
 		}
 	}
 	return nil
@@ -126,8 +143,8 @@ func (t *TreeParser) parseFile(f *git.File) error {
 		t.Categories[t.index[p[1]]].Add(c)
 	case *Item:
 		t.Categories[t.index[p[1]]].Sub(p[2]).AddItem(c)
-	case *Check:
-		t.Categories[t.index[p[1]]].Sub(p[2]).AddCheck(c)
+	case *Checklist:
+		t.Categories[t.index[p[1]]].Sub(p[2]).SetChecks(c)
 	default:
 		return parseError{f.Name, "type", "Invalid Path"}
 	}

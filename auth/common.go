@@ -10,6 +10,7 @@ import (
 	lib "golang.org/x/oauth2/github"
 )
 
+// register in gob models saved with cookies
 func init() {
 	gob.Register(&models.User{})
 }

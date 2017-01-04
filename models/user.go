@@ -7,6 +7,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// User is the model used for cookies
 type User struct {
 	Login string       `json:"login"`
 	Name  string       `json:"name"`
@@ -14,6 +15,7 @@ type User struct {
 	Token oauth2.Token `json:"-"`
 }
 
+// AsAuthor returns a commit author for Github
 func (u *User) AsAuthor() *github.CommitAuthor {
 	now := time.Now()
 	return &github.CommitAuthor{Name: &u.Name, Email: &u.Email, Date: &now}
