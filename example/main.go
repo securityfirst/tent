@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/securityfirst/octo"
-	"github.com/securityfirst/octo/auth"
-	"github.com/securityfirst/octo/repo"
+	"github.com/securityfirst/tent"
+	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/repo"
 )
 
 var conf = auth.Config{
@@ -31,12 +31,12 @@ func init() {
 
 func main() {
 	e := gin.Default()
-	r, err := repo.New("securityfirst", "octo-content", conf.OAuth())
+	r, err := repo.New("securityfirst", "tent-content", conf.OAuth())
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}
 
-	o := octo.New(r)
+	o := tent.New(r)
 	o.Register(&e.RouterGroup, conf)
 	e.Run(":2015")
 }

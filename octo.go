@@ -1,4 +1,4 @@
-package octo
+package tent
 
 import (
 	"net/http"
@@ -6,8 +6,8 @@ import (
 
 	"github.com/cenkalti/log"
 	"github.com/gin-gonic/gin"
-	"github.com/securityfirst/octo/auth"
-	"github.com/securityfirst/octo/repo"
+	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/repo"
 )
 
 const (
@@ -21,15 +21,15 @@ const (
 	pathCheck       = "/api/repo/category/:cat/:sub/checks"
 )
 
-func New(r *repo.Repo) *Octo {
-	return &Octo{repo: r}
+func New(r *repo.Repo) *Tent {
+	return &Tent{repo: r}
 }
 
-type Octo struct {
+type Tent struct {
 	repo *repo.Repo
 }
 
-func (o *Octo) Register(root *gin.RouterGroup, c auth.Config) {
+func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	var (
 		engine = auth.NewEngine(c, root)
 		hookCh = make(chan struct{})

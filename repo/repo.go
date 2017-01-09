@@ -11,8 +11,8 @@ import (
 	"gopkg.in/src-d/go-git.v3"
 
 	"github.com/google/go-github/github"
-	"github.com/securityfirst/octo/models"
-	"github.com/securityfirst/octo/repo/component"
+	"github.com/securityfirst/tent/models"
+	"github.com/securityfirst/tent/repo/component"
 	"golang.org/x/oauth2"
 )
 

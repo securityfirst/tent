@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
-	"github.com/securityfirst/octo/models"
-	"github.com/securityfirst/octo/repo/component"
+	"github.com/securityfirst/tent/models"
+	"github.com/securityfirst/tent/repo/component"
 )
 
 var (
@@ -74,7 +74,7 @@ func (r *RepoHandler) locale(c *gin.Context) string {
 }
 
 func (r *RepoHandler) ParseLocale(c *gin.Context) {
-	s := c.Request.Header.Get("X-Octo-Language")
+	s := c.Request.Header.Get("X-Tent-Language")
 	if s == "" {
 		s = "en"
 	}

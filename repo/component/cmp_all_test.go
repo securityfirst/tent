@@ -16,7 +16,7 @@ var _ = Suite(&CmpSuite{})
 type CmpSuite struct{}
 
 func (*CmpSuite) TestParse(c *C) {
-	r, err := git.NewRepository(repoAddress("securityfirst", "octo-content"), nil)
+	r, err := git.NewRepository(repoAddress("securityfirst", "tent-content"), nil)
 	c.Assert(err, IsNil)
 	err = r.PullDefault()
 	c.Assert(err, IsNil)

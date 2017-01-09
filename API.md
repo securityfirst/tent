@@ -1,4 +1,4 @@
-# Octo API
+# Tent API
 
 ## General
 
