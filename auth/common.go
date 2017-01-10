@@ -3,7 +3,9 @@ package auth
 import (
 	"encoding/gob"
 	"fmt"
+	"path"
 
+	"github.com/gin-gonic/gin"
 	"github.com/securityfirst/tent/models"
 
 	"golang.org/x/oauth2"
@@ -33,11 +35,11 @@ type Config struct {
 }
 
 // OAuth return the oauth2 configuration struct
-func (c *Config) OAuth() *oauth2.Config {
+func (c *Config) OAuth(root *gin.RouterGroup) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     c.Id,
 		ClientSecret: c.Secret,
-		RedirectURL:  fmt.Sprint(c.OAuthHost, c.Callback.Endpoint),
+		RedirectURL:  fmt.Sprint(c.OAuthHost, path.Clean(root.BasePath()+c.Callback.Endpoint)),
 		Endpoint:     lib.Endpoint,
 		Scopes:       []string{"user:email", "repo"},
 	}

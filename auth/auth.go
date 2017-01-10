@@ -22,7 +22,7 @@ const randomString = "horse battery staple"
 // NewEngine creates a new Engine using and adds the handle for authentication
 func NewEngine(c Config, root *gin.RouterGroup) *Engine {
 	var e = Engine{sessions: sessions.NewCookieStore([]byte(randomString), nil)}
-	config := c.OAuth()
+	config := c.OAuth(root)
 	c.Login.Redirect = config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
 	root.GET(c.Login.Endpoint, func(g *gin.Context) {
 		g.Redirect(http.StatusTemporaryRedirect, c.Login.Redirect)
