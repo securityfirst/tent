@@ -24,6 +24,7 @@ func NewEngine(c Config, root *gin.RouterGroup) *Engine {
 	var e = Engine{sessions: sessions.NewCookieStore([]byte(randomString), nil)}
 	config := c.OAuth(root)
 	c.Login.Redirect = config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
+	c.Callback.Redirect = root.BasePath()
 	root.GET(c.Login.Endpoint, func(g *gin.Context) {
 		g.Redirect(http.StatusTemporaryRedirect, c.Login.Redirect)
 	})
