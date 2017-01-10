@@ -3,6 +3,7 @@ package auth
 import (
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
@@ -24,7 +25,8 @@ func NewEngine(c Config, root *gin.RouterGroup) *Engine {
 	var e = Engine{sessions: sessions.NewCookieStore([]byte(randomString), nil)}
 	config := c.OAuth(root)
 	c.Login.Redirect = config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
-	c.Callback.Redirect = root.BasePath()
+	c.Callback.Redirect = path.Clean(root.BasePath() + c.Callback.Redirect)
+	c.Logout.Redirect = path.Clean(root.BasePath() + c.Logout.Redirect)
 	root.GET(c.Login.Endpoint, func(g *gin.Context) {
 		g.Redirect(http.StatusTemporaryRedirect, c.Login.Redirect)
 	})
