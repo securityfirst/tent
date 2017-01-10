@@ -33,7 +33,7 @@ var commitMsg = map[int]string{
 	actionDelete: "Delete",
 }
 
-func New(owner, name string, conf *oauth2.Config) (*Repo, error) {
+func New(owner, name string) (*Repo, error) {
 	r, err := git.NewRepository(repoAddress(owner, name), nil)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,6 @@ func New(owner, name string, conf *oauth2.Config) (*Repo, error) {
 		repo:  r,
 		name:  name,
 		owner: owner,
-		conf:  conf,
 	}, nil
 }
 
@@ -57,6 +56,8 @@ type Repo struct {
 	categories []*component.Category
 	ticker     *time.Ticker
 }
+
+func (r *Repo) SetConf(c *oauth2.Config) { r.conf = c }
 
 func (r *Repo) Tree(locale string) interface{} {
 	r.RLock()

@@ -31,13 +31,12 @@ func init() {
 
 func main() {
 	e := gin.Default()
-	root := &e.RouterGroup
-	r, err := repo.New("securityfirst", "tent-content", conf.OAuth(root))
+	r, err := repo.New("securityfirst", "tent-content")
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}
 
 	o := tent.New(r)
-	o.Register(root, conf)
+	o.Register(&e.RouterGroup, conf)
 	e.Run(":2015")
 }

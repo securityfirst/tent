@@ -36,6 +36,7 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 		h      = o.repo.Handler()
 	)
 
+	o.repo.SetConf(c.OAuth(root))
 	// Free handlers
 	root.GET(pathTree, h.ParseLocale, h.Tree)
 
