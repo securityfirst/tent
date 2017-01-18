@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,15 +28,16 @@ var commitMsg = map[int]string{
 var ErrInvalid = errors.New("Invalid content")
 
 const (
-	bodySeparator = "\n---\n"
+	bodySeparator = "\n\n"
 	suffixMeta    = ".metadata"
 	suffixChecks  = ".checks"
+	fileExt       = ".md"
 )
 
 var (
-	categoryOrder = []string{"Name:", "Order:"}
-	itemOrder     = []string{"Title:", "Difficulty:", "Order:"}
-	checkOrder    = []string{"Text:", "Difficulty:", "NoCheck:"}
+	categoryOrder = []string{"Name", "Order"}
+	itemOrder     = []string{"Title", "Difficulty", "Order"}
+	checkOrder    = []string{"Text", "Difficulty", "NoCheck"}
 )
 
 // A Component is en element of the resource tree
@@ -51,11 +53,12 @@ type Component interface {
 func newCmp(path string) (Component, error) {
 	var c Component
 	p := strings.Split(path, "/")
+	fmt.Printf("%q\n", p)
 	switch l := len(p); l {
 	case 4:
 		c = &Category{}
 	case 5:
-		switch p[4] {
+		switch strings.Replace(p[4], fileExt, "", 1) {
 		case suffixMeta:
 			c = new(Subcategory)
 		case suffixChecks:
@@ -85,7 +88,11 @@ func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
 			}
 			return err
 		}
-		if filter != nil && !filter(strings.ToLower(f.Name)) {
+		if !strings.HasSuffix(f.Name, fileExt) {
+			continue
+		}
+		name := f.Name[:len(f.Name)-len(fileExt)]
+		if filter != nil && !filter(strings.ToLower(name)) {
 			continue
 		}
 		if err := t.parseFile(f); err != nil {
@@ -169,13 +176,17 @@ func uploadAddress(owner, name, file string) string {
 	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, name, file)
 }
 
+var metaRow = regexp.MustCompile(`\[([a-zA-Z]+)\]: # \(([^)]{0,})\)`)
+
 func checkMeta(meta string, order []string) error {
 	rows := strings.Split(meta, "\n")
 	if len(rows) != len(order) {
 		return ErrInvalid
 	}
 	for i := range order {
-		if !strings.HasPrefix(rows[i], order[i]) {
+		m := metaRow.FindStringSubmatch(rows[i])
+		if len(m) != 3 || m[1] != order[i] {
+			fmt.Println(">>>>>", m)
 			return ErrInvalid
 		}
 	}
@@ -190,7 +201,7 @@ func setMeta(meta string, order []string, pointers args) error {
 		return ErrInvalid
 	}
 	for i, p := range pointers {
-		v := rows[i][len(order[i]):]
+		v := metaRow.FindStringSubmatch(rows[i])[2]
 		switch pointer := p.(type) {
 		case *string:
 			*pointer = v
@@ -221,8 +232,7 @@ func getMeta(order []string, values args) string {
 		if i > 0 {
 			b.WriteRune('\n')
 		}
-		b.WriteString(order[i])
-		fmt.Fprint(b, values[i])
+		fmt.Fprintf(b, "[%s]: # (%v)", order[i], values[i])
 	}
 	return b.String()
 }

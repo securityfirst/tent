@@ -113,14 +113,14 @@ func (s *Subcategory) Item(id string) *Item {
 }
 
 func (s *Subcategory) basePath() string {
-	return s.parent.basePath() + "/" + s.Id
+	return fmt.Sprintf("%s/%s", s.parent.basePath(), s.Id)
 }
 
 func (s *Subcategory) Path() string {
-	return fmt.Sprintf("%s/.metadata", s.basePath())
+	return fmt.Sprintf("%s/.metadata%s", s.basePath(), fileExt)
 }
 
-var subPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/([^/]+)/.metadata")
+var subPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/([^/]+)/.metadata.md")
 
 func (s *Subcategory) SetPath(filepath string) error {
 	p := subPath.FindStringSubmatch(filepath)

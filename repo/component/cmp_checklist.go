@@ -32,10 +32,10 @@ func (c *Checklist) SHA() string {
 }
 
 func (c *Checklist) Path() string {
-	return fmt.Sprintf("%s/.checks", c.parent.basePath())
+	return fmt.Sprintf("%s/.checks%s", c.parent.basePath(), fileExt)
 }
 
-var checklistPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/.checks")
+var checklistPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/.checks.md")
 
 func (*Checklist) SetPath(filepath string) error {
 	p := checklistPath.FindString(filepath)

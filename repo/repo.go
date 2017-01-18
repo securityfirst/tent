@@ -148,7 +148,7 @@ func (r *Repo) file(c component.Component) (*git.File, error) {
 	}
 	r.RLock()
 	defer r.RUnlock()
-	return r.commit.File(c.Path()[1:])
+	return r.commit.File(c.Path()[1:] + ".md")
 }
 
 func (r *Repo) Get(c component.Component) (string, error) {

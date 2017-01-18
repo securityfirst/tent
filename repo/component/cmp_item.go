@@ -29,10 +29,10 @@ func (i *Item) SHA() string {
 }
 
 func (i *Item) Path() string {
-	return i.parent.basePath() + "/" + i.Id
+	return fmt.Sprintf("%s/%s%s", i.parent.basePath(), i.Id, fileExt)
 }
 
-var itemPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/([^/]+)")
+var itemPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/([^/]+).md")
 
 func (i *Item) SetPath(filepath string) error {
 	p := itemPath.FindStringSubmatch(filepath)
@@ -48,7 +48,7 @@ func (i *Item) Contents() string {
 }
 
 func (i *Item) SetContents(contents string) error {
-	parts := strings.Split(strings.Trim(contents, "\n"), bodySeparator)
+	parts := strings.SplitN(strings.Trim(contents, "\n"), bodySeparator, 2)
 	if len(parts) != 2 {
 		return ErrInvalid
 	}

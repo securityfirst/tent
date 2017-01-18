@@ -78,10 +78,10 @@ func (c *Category) basePath() string {
 }
 
 func (c *Category) Path() string {
-	return fmt.Sprintf("%s/%s", c.basePath(), suffixMeta)
+	return fmt.Sprintf("%s/%s%s", c.basePath(), suffixMeta, fileExt)
 }
 
-var catPath = regexp.MustCompile("/contents_([a-z]{2})/([^/]+)/.metadata")
+var catPath = regexp.MustCompile("/contents_([a-z]{2})/([^/]+)/.metadata.md")
 
 func (c *Category) SetPath(filepath string) error {
 	p := catPath.FindStringSubmatch(filepath)
