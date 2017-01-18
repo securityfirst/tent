@@ -148,7 +148,7 @@ func (r *RepoHandler) ParseCat(c *gin.Context) {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	cat.Id = c.Param("cat")
+	cat.Id, cat.Locale = c.Param("cat"), r.locale(c)
 	c.Set("cat", &cat)
 }
 
