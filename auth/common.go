@@ -25,13 +25,14 @@ type HandleConf struct {
 
 // Basic configuration for an Auth
 type Config struct {
-	Id        string
-	Secret    string
-	OAuthHost string
-	Host      string
-	Login     HandleConf
-	Logout    HandleConf
-	Callback  HandleConf
+	Id           string
+	Secret       string
+	OAuthHost    string
+	Host         string
+	RandomString string
+	Login        HandleConf
+	Logout       HandleConf
+	Callback     HandleConf
 }
 
 // OAuth return the oauth2 configuration struct

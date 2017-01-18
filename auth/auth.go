@@ -17,14 +17,11 @@ const (
 	githubUser  = "github-email"
 )
 
-// random string for oauth2 API calls to protect against CSRF
-const randomString = "horse battery staple"
-
 // NewEngine creates a new Engine using and adds the handle for authentication
 func NewEngine(c Config, root *gin.RouterGroup) *Engine {
-	var e = Engine{sessions: sessions.NewCookieStore([]byte(randomString), nil)}
+	var e = Engine{sessions: sessions.NewCookieStore([]byte(c.RandomString), nil)}
 	config := c.OAuth(root)
-	c.Login.Redirect = config.AuthCodeURL(randomString, oauth2.AccessTypeOnline)
+	c.Login.Redirect = config.AuthCodeURL(c.RandomString, oauth2.AccessTypeOnline)
 	c.Callback.Redirect = path.Clean(root.BasePath() + c.Callback.Redirect)
 	c.Logout.Redirect = path.Clean(root.BasePath() + c.Logout.Redirect)
 	root.GET(c.Login.Endpoint, func(g *gin.Context) {
@@ -42,8 +39,8 @@ func NewEngine(c Config, root *gin.RouterGroup) *Engine {
 			return
 		}
 		state := g.Query("state")
-		if state != randomString {
-			log.Printf("Invalid oauth state, expected %q, got %q", randomString, state)
+		if state != c.RandomString {
+			log.Printf("Invalid oauth state, expected %q, got %q", c.RandomString, state)
 			g.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		}
