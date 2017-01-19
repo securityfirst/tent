@@ -53,7 +53,6 @@ type Component interface {
 func newCmp(path string) (Component, error) {
 	var c Component
 	p := strings.Split(path, "/")
-	fmt.Printf("%q\n", p)
 	switch l := len(p); l {
 	case 4:
 		c = &Category{}
@@ -186,7 +185,6 @@ func checkMeta(meta string, order []string) error {
 	for i := range order {
 		m := metaRow.FindStringSubmatch(rows[i])
 		if len(m) != 3 || m[1] != order[i] {
-			fmt.Println(">>>>>", m)
 			return ErrInvalid
 		}
 	}
