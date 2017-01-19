@@ -47,7 +47,7 @@ func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
 		"name":   s.Name,
 		"items":  s.ItemNames(),
-		"checks": s.Checks(),
+		"checks": s.checklist.Checks,
 	}
 	if s.Hash != "" {
 		m["hash"] = s.Hash
