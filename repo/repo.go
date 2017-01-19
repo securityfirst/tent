@@ -59,12 +59,12 @@ type Repo struct {
 
 func (r *Repo) SetConf(c *oauth2.Config) { r.conf = c }
 
-func (r *Repo) Tree(locale string) interface{} {
+func (r *Repo) Tree(locale string, html bool) interface{} {
 	r.RLock()
 	defer r.RUnlock()
 	var s = make([]interface{}, 0, len(r.categories))
 	for _, i := range r.Categories() {
-		s = append(s, r.Category(i, locale).Tree())
+		s = append(s, r.Category(i, locale).Tree(html))
 	}
 	return s
 }
@@ -148,7 +148,7 @@ func (r *Repo) file(c component.Component) (*git.File, error) {
 	}
 	r.RLock()
 	defer r.RUnlock()
-	return r.commit.File(c.Path()[1:] + ".md")
+	return r.commit.File(c.Path()[1:])
 }
 
 func (r *Repo) Get(c component.Component) (string, error) {

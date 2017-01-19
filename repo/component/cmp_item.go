@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/russross/blackfriday"
 )
 
 type Item struct {
 	parent     *Subcategory
-	Id         string  `json:"-"`
-	Hash       string  `json:"hash,omitempty"`
-	Difficulty string  `json:"difficulty"`
-	Title      string  `json:"title"`
-	Body       string  `json:"body"`
+	Id         string `json:"-"`
+	Hash       string `json:"hash,omitempty"`
+	Difficulty string `json:"difficulty"`
+	Title      string `json:"title"`
+	Body       string `json:"body"`
+	htmlBody   string
 	Order      float64 `json:"-"`
 }
 
@@ -56,6 +59,7 @@ func (i *Item) SetContents(contents string) error {
 		return err
 	}
 	i.Body = parts[1]
+	i.htmlBody = string(blackfriday.MarkdownCommon([]byte(i.Body)))
 	return setMeta(
 		parts[0],
 		itemOrder,

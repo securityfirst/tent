@@ -23,10 +23,10 @@ func (c *Category) SHA() string {
 	return c.Hash
 }
 
-func (c *Category) Tree() interface{} {
+func (c *Category) Tree(html bool) interface{} {
 	var subs = make([]interface{}, 0, len(c.subcategories))
 	for i := range c.subcategories {
-		subs = append(subs, c.subcategories[i].Tree())
+		subs = append(subs, c.subcategories[i].Tree(html))
 	}
 	return map[string]interface{}{
 		"name":          c.Name,

@@ -282,5 +282,5 @@ func (r *RepoHandler) Delete(c *gin.Context) {
 }
 
 func (r *RepoHandler) Tree(c *gin.Context) {
-	c.JSON(http.StatusOK, r.repo.Tree(r.locale(c)))
+	c.JSON(http.StatusOK, r.repo.Tree(r.locale(c), c.Query("content") == "html"))
 }

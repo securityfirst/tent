@@ -20,10 +20,17 @@ func (s *Subcategory) HasChildren() bool {
 	return len(s.items) != 0
 }
 
-func (s *Subcategory) Tree() interface{} {
+func (s *Subcategory) Tree(html bool) interface{} {
+	var items = make([]Item, len(s.items))
+	for i, v := range s.items {
+		items[i] = *v
+		if html {
+			items[i].Body = items[i].htmlBody
+		}
+	}
 	return map[string]interface{}{
 		"name":   s.Name,
-		"items":  s.items,
+		"items":  items,
 		"checks": s.checklist.Checks,
 	}
 }

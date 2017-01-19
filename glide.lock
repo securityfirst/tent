@@ -1,6 +1,10 @@
-hash: 0a48039a77e1101e1d0beb9f50bf475df962ed4e858e67f59a051bbf93fe0ab9
-updated: 2016-10-12T17:35:44.4897925+02:00
+hash: 9df816530f9f5e4fb2938fc6c2461de94604a3ca83dc9d29dc27d3844e972ad7
+updated: 2017-01-19T18:16:36.5884188+01:00
 imports:
+- name: github.com/cenkalti/log
+  version: 958ee7afc008e65fe479a565819a25b30af0ec65
+  subpackages:
+  - github.com\cenkalti\log
 - name: github.com/gin-gonic/gin
   version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
   subpackages:
@@ -33,18 +37,34 @@ imports:
   version: ca9ada44574153444b00d3fd9c8559e4cc95f896
   subpackages:
   - github.com\gorilla\sessions
+- name: github.com/hashicorp/errwrap
+  version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
+  subpackages:
+  - github.com\hashicorp\errwrap
+- name: github.com/hashicorp/go-multierror
+  version: ed905158d87462226a13fe39ddf685ea65f1c11f
+  subpackages:
+  - github.com\hashicorp\go-multierror
 - name: github.com/manucorporat/sse
   version: ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
   subpackages:
   - github.com\manucorporat\sse
+- name: github.com/mattn/go-isatty
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+  subpackages:
+  - github.com\mattn\go-isatty
+- name: github.com/russross/blackfriday
+  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
+  subpackages:
+  - github.com\russross\blackfriday
 - name: github.com/sergi/go-diff
   version: ce4a6e0e61d6908298eed511fc0683062d4c7f3b
   subpackages:
   - github.com\sergi\go-diff\diffmatchpatch
-- name: github.com/sourcegraph/go-vcsurl
-  version: 1e4dda7d6af7dc921d42612f9aa7e7d6fd80745c
+- name: github.com/shurcooL/sanitized_anchor_name
+  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
   subpackages:
-  - github.com\sourcegraph\go-vcsurl
+  - github.com\shurcooL\sanitized_anchor_name
 - name: golang.org/x/crypto
   version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
   subpackages:
@@ -64,6 +84,10 @@ imports:
   - golang.org\x\oauth2
   - golang.org\x\oauth2\github
   - golang.org\x\oauth2\internal
+- name: golang.org/x/sys
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  subpackages:
+  - golang.org\x\sys\unix
 - name: google.golang.org/appengine
   version: 596d349602aa23355ff46ade49ebfeb99c0fc550
   subpackages:
@@ -83,7 +107,7 @@ imports:
   subpackages:
   - gopkg.in\sourcegraph\go-vcsurl.v1
 - name: gopkg.in/src-d/go-git.v3
-  version: bc035e354ad328192a1e5040d84b73d93291efcb
+  version: bb4a55d739ce1e75596f26ae2b21949e71af79aa
   subpackages:
   - gopkg.in\src-d\go-git.v3
   - gopkg.in\src-d\go-git.v3\clients

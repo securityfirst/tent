@@ -12,3 +12,4 @@ import:
 - package: github.com/gin-gonic/gin
   subpackages:
   - '...'
+- package: github.com/russross/blackfriday
