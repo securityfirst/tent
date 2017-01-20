@@ -52,19 +52,19 @@ func NewEngine(c Config, root *gin.RouterGroup) *Engine {
 			return
 		}
 		user := models.User{Token: *token}
-		defer g.Redirect(http.StatusTemporaryRedirect, c.Callback.Redirect)
-
-		var client = github.NewClient(e.config.Client(oauth2.NoContext, &user.Token))
-		u, _, err := client.Users.Get("")
+		u, _, err := github.NewClient(e.config.Client(oauth2.NoContext, &user.Token)).Users.Get("")
 		if err != nil {
 			log.Printf("Cannot get User: %s", err)
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 		user.Name, user.Email, user.Login = *u.Name, *u.Email, *u.Login
 		if err := e.createSession(g, &user); err != nil {
 			log.Printf("Cannot save session: %s", err)
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
+		g.Redirect(http.StatusTemporaryRedirect, c.Callback.Redirect)
 	})
 	return &e
 }
