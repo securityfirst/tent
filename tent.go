@@ -39,6 +39,8 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	o.repo.SetConf(c.OAuth(root))
 	// Free handlers
 	root.GET(pathTree, h.ParseLocale, h.Tree)
+	// Hook for github
+	root.POST(pathUpdate, func(*gin.Context) { hookCh <- struct{}{} })
 
 	// Authorized handlers
 	authorized := root.Use(h.ParseLocale, func(c *gin.Context) {
@@ -53,8 +55,6 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 
 	authorized.GET(pathInfo, h.Info)
 	authorized.GET(pathRepo, h.Root)
-	// Hook for github
-	authorized.POST(pathUpdate, func(*gin.Context) { hookCh <- struct{}{} })
 
 	authorized.GET(pathCategory, h.SetCat, h.Show)
 	authorized.PUT(pathCategory, h.ParseCat, h.Update)
