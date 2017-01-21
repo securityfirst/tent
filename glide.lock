@@ -1,10 +1,12 @@
-hash: 9df816530f9f5e4fb2938fc6c2461de94604a3ca83dc9d29dc27d3844e972ad7
-updated: 2017-01-19T18:16:36.5884188+01:00
+hash: 7350017ffd991b7af10e09bee967dc35e97f37e2dbf7286f1061f514d8953163
+updated: 2017-01-21T19:33:22.81246+01:00
 imports:
 - name: github.com/cenkalti/log
   version: 958ee7afc008e65fe479a565819a25b30af0ec65
   subpackages:
   - github.com\cenkalti\log
+- name: github.com/dgrijalva/jwt-go
+  version: a601269ab70c205d26370c16f7c81e9017c14e04
 - name: github.com/gin-gonic/gin
   version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
   subpackages:

@@ -13,3 +13,4 @@ import:
   subpackages:
   - '...'
 - package: github.com/russross/blackfriday
+- package: github.com/dgrijalva/jwt-go
