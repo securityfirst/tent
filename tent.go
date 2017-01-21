@@ -54,7 +54,7 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	authorized.GET(pathInfo, h.Info)
 	authorized.GET(pathRepo, h.Root)
 	// Hook for github
-	authorized.GET(pathUpdate, func(*gin.Context) { hookCh <- struct{}{} })
+	authorized.POST(pathUpdate, func(*gin.Context) { hookCh <- struct{}{} })
 
 	authorized.GET(pathCategory, h.SetCat, h.Show)
 	authorized.PUT(pathCategory, h.ParseCat, h.Update)
