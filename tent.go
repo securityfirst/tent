@@ -18,6 +18,8 @@ const (
 	pathCategory    = "/api/repo/category/:cat"
 	pathSubcategory = "/api/repo/category/:cat/:sub"
 	pathItem        = "/api/repo/category/:cat/:sub/item/:item"
+	pathAsset       = "/api/repo/asset"
+	pathAssetId     = "/api/repo/asset/:asset"
 	pathCheck       = "/api/repo/category/:cat/:sub/checks"
 )
 
@@ -73,6 +75,9 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 
 	authorized.GET(pathCheck, h.SetCheck, h.Show)
 	authorized.PUT(pathCheck, h.ParseCheck, h.Update)
+
+	authorized.GET(pathAssetId, h.SetAsset, h.AssetShow)
+	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
 
 	o.repo.StartSync(10*time.Minute, hookCh)
 	// Force first update

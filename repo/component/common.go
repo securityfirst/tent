@@ -1,13 +1,11 @@
 package component
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
+	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"gopkg.in/src-d/go-git.v3"
@@ -51,34 +49,41 @@ type Component interface {
 }
 
 func newCmp(path string) (Component, error) {
-	var c Component
 	p := strings.Split(path, "/")
 	switch l := len(p); l {
+	case 3:
+		if isImage(p[2]) {
+			return new(Asset), nil
+		}
+		return nil, ErrInvalid
 	case 4:
-		c = &Category{}
+		return new(Category), nil
 	case 5:
-		switch strings.Replace(p[4], fileExt, "", 1) {
+		if !IsMd(p[4]) {
+			return nil, ErrInvalid
+		}
+		switch p[4][:len(p[4])-len(fileExt)] {
 		case suffixMeta:
-			c = new(Subcategory)
+			return new(Subcategory), nil
 		case suffixChecks:
-			c = new(Checklist)
+			return new(Checklist), nil
 		default:
-			c = new(Item)
+			return new(Item), nil
 		}
 	default:
 		return nil, ErrInvalid
 	}
-	return c, c.SetPath(path)
 }
 
 // TreeParser is an helper, creates a tree from the repo
 type TreeParser struct {
 	index      map[string]int
 	Categories []*Category
+	Assets     []*Asset
 }
 
 // Parse executes the parsing on a repo
-func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
+func (t *TreeParser) parse(tree *git.Tree, fn func(name string) bool) error {
 	for iter := tree.Files(); ; {
 		f, err := iter.Next()
 		if err != nil {
@@ -87,11 +92,7 @@ func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
 			}
 			return err
 		}
-		if !strings.HasSuffix(f.Name, fileExt) {
-			continue
-		}
-		name := f.Name[:len(f.Name)-len(fileExt)]
-		if filter != nil && !filter(strings.ToLower(name)) {
+		if !fn(f.Name) {
 			continue
 		}
 		if err := t.parseFile(f); err != nil {
@@ -101,18 +102,37 @@ func (t *TreeParser) parse(tree *git.Tree, filter func(string) bool) error {
 	return nil
 }
 
+func (t *TreeParser) filterCat(name string) bool {
+	return strings.HasSuffix(name, suffixMeta+fileExt)
+}
+
+func (t *TreeParser) filterRes(name string) bool {
+	if !strings.HasSuffix(name, fileExt) {
+		return isImage(name)
+	}
+	return !strings.HasSuffix(name, suffixMeta+fileExt)
+}
+
+func IsMd(name string) bool { return filepath.Ext(name) == fileExt }
+
+func isImage(name string) bool {
+	ext := filepath.Ext(name)
+	for _, v := range []string{".jpg", ".jpeg", ".gif", ".png", ".bmp"} {
+		if v == ext {
+			return true
+		}
+	}
+	return false
+}
+
 // Parse executes the parsing on a repo
 func (t *TreeParser) Parse(tree *git.Tree) error {
 	t.index = make(map[string]int)
 	t.Categories = make([]*Category, 0)
-	if err := t.parse(tree, func(name string) bool {
-		return strings.HasSuffix(name, suffixMeta)
-	}); err != nil {
+	if err := t.parse(tree, t.filterCat); err != nil {
 		return err
 	}
-	if err := t.parse(tree, func(name string) bool {
-		return !strings.HasSuffix(name, suffixMeta) && name != "license" && name != "readme.md"
-	}); err != nil {
+	if err := t.parse(tree, t.filterRes); err != nil {
 		return err
 	}
 	sort.Sort(catSorter(t.Categories))
@@ -143,6 +163,9 @@ func (t *TreeParser) parseFile(f *git.File) error {
 		return parseError{f.Name, "cmp", err}
 	}
 	p := strings.Split(f.Name, "/")
+	if err := cmp.SetPath("/" + f.Name); err != nil {
+		return parseError{f.Name, "path", err}
+	}
 	switch c := cmp.(type) {
 	case *Category:
 		t.index[p[1]] = len(t.Categories)
@@ -153,11 +176,10 @@ func (t *TreeParser) parseFile(f *git.File) error {
 		t.Categories[t.index[p[1]]].Sub(p[2]).AddItem(c)
 	case *Checklist:
 		t.Categories[t.index[p[1]]].Sub(p[2]).SetChecks(c)
+	case *Asset:
+		t.Assets = append(t.Assets, c)
 	default:
 		return parseError{f.Name, "type", "Invalid Path"}
-	}
-	if err := cmp.SetPath("/" + f.Name); err != nil {
-		return parseError{f.Name, "path", err}
 	}
 	if err := cmp.SetContents(contents); err != nil {
 		return parseError{f.Name, "contents", err}
@@ -173,64 +195,4 @@ func repoAddress(owner, name string) string {
 
 func uploadAddress(owner, name, file string) string {
 	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, name, file)
-}
-
-var metaRow = regexp.MustCompile(`\[([a-zA-Z]+)\]: # \(([^)]{0,})\)`)
-
-func checkMeta(meta string, order []string) error {
-	rows := strings.Split(meta, "\n")
-	if len(rows) != len(order) {
-		return ErrInvalid
-	}
-	for i := range order {
-		m := metaRow.FindStringSubmatch(rows[i])
-		if len(m) != 3 || m[1] != order[i] {
-			return ErrInvalid
-		}
-	}
-	return nil
-}
-
-type args []interface{}
-
-func setMeta(meta string, order []string, pointers args) error {
-	rows := strings.Split(strings.TrimSpace(meta), "\n")
-	if len(rows) != len(order) {
-		return ErrInvalid
-	}
-	for i, p := range pointers {
-		v := metaRow.FindStringSubmatch(rows[i])[2]
-		switch pointer := p.(type) {
-		case *string:
-			*pointer = v
-		case *bool:
-			*pointer = v == "true"
-		case *int:
-			n, err := strconv.Atoi(v)
-			if err != nil {
-				return ErrInvalid
-			}
-			*pointer = n
-		case *float64:
-			n, err := strconv.ParseFloat(v, 64)
-			if err != nil {
-				return ErrInvalid
-			}
-			*pointer = n
-		default:
-			panic(fmt.Sprintf("Unknown type: %T", pointer))
-		}
-	}
-	return nil
-}
-
-func getMeta(order []string, values args) string {
-	b := bytes.NewBuffer(nil)
-	for i := range values {
-		if i > 0 {
-			b.WriteRune('\n')
-		}
-		fmt.Fprintf(b, "[%s]: # (%v)", order[i], values[i])
-	}
-	return b.String()
 }

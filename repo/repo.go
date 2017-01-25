@@ -54,6 +54,7 @@ type Repo struct {
 	repo       *git.Repository
 	commit     *git.Commit
 	categories []*component.Category
+	assets     []*component.Asset
 	ticker     *time.Ticker
 }
 
@@ -139,6 +140,7 @@ func (r *Repo) pull() error {
 		return err
 	}
 	r.categories = parser.Categories
+	r.assets = parser.Assets
 	return nil
 }
 
@@ -157,6 +159,18 @@ func (r *Repo) Get(c component.Component) (string, error) {
 		return "", err
 	}
 	return f.Contents()
+}
+
+func (r *Repo) Asset(id string) *component.Asset {
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, a := range r.assets {
+		if a.Id == id {
+			return a
+		}
+	}
+	return nil
 }
 
 func (r *Repo) Category(cat, locale string) *component.Category {

@@ -1,9 +1,12 @@
 package repo
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"log"
 	"net/http"
+	"path/filepath"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -33,24 +36,29 @@ func (r *RepoHandler) err(c *gin.Context, status int, err error) {
 }
 
 func (r *RepoHandler) cmp(c *gin.Context) component.Component {
-	var cmp component.Component
-	if v, ok := c.Get("cat"); ok {
-		cmp = v.(*component.Category)
-		if v, ok := c.Get("sub"); ok {
-			cmp = v.(*component.Subcategory)
-			if v, ok := c.Get("item"); ok {
-				cmp = v.(*component.Item)
-			}
-			if v, ok := c.Get("checks"); ok {
-				cmp = v.(*component.Checklist)
-			}
-		}
+	cat, ok := c.Get("cat")
+	if !ok {
+		return nil
 	}
-	return cmp
+	sub, ok := c.Get("sub")
+	if !ok {
+		return cat.(component.Component)
+	}
+	if item, ok := c.Get("item"); ok {
+		return item.(component.Component)
+	}
+	if check, ok := c.Get("checks"); ok {
+		return check.(component.Component)
+	}
+	return sub.(component.Component)
 }
 
 func (r *RepoHandler) user(c *gin.Context) *models.User {
 	return c.MustGet("user").(*models.User)
+}
+
+func (r *RepoHandler) asset(c *gin.Context) *component.Asset {
+	return c.MustGet("asset").(*component.Asset)
 }
 
 func (r *RepoHandler) cat(c *gin.Context) *component.Category {
@@ -213,6 +221,23 @@ func (r *RepoHandler) ParseCheck(c *gin.Context) {
 	c.Set("checks", &check)
 }
 
+func (r *RepoHandler) SetAsset(c *gin.Context) {
+	c.Set("asset", r.repo.Asset(c.Param("asset")))
+}
+
+func (r *RepoHandler) ParseAsset(c *gin.Context) {
+	file := c.Request.Header.Get("file")
+	if file == "" {
+		file = "upload.jpg"
+	}
+	b := bytes.NewBuffer(nil)
+	io.Copy(b, c.Request.Body)
+	c.Set("asset", &component.Asset{
+		Id:      RandStringBytesMaskImprSrc(10) + filepath.Ext(file),
+		Content: b.String(),
+	})
+}
+
 func (r *RepoHandler) Info(c *gin.Context) {
 	u := r.user(c)
 	c.JSON(http.StatusOK, gin.H{
@@ -235,7 +260,6 @@ func (r *RepoHandler) Root(c *gin.Context) {
 
 func (r *RepoHandler) Show(c *gin.Context) {
 	cmp := r.cmp(c)
-	log.Println(cmp)
 	hash, err := r.repo.ComponentHash(cmp)
 	if err != nil {
 		r.err(c, http.StatusInternalServerError, err)
@@ -261,6 +285,20 @@ func (r *RepoHandler) Show(c *gin.Context) {
 		out = &v
 	}
 	c.JSON(http.StatusOK, out)
+}
+
+func (r *RepoHandler) AssetShow(c *gin.Context) {
+	c.Writer.WriteHeader(200)
+	c.Writer.WriteString(r.asset(c).Contents())
+}
+
+func (r *RepoHandler) AssetCreate(c *gin.Context) {
+	asset := r.asset(c)
+	if err := r.repo.Create(asset, r.user(c)); err != nil {
+		r.err(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(201, gin.H{"id": asset.Id})
 }
 
 func (r *RepoHandler) Create(c *gin.Context) {
