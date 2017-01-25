@@ -86,7 +86,7 @@ func (e *Engine) GetUser(c *gin.Context) *models.User {
 		}
 		data = parts[1]
 	} else {
-		cookie, err := c.GetCookie(githubUser)
+		cookie, err := c.Cookie(githubUser)
 		if err != nil {
 			return nil
 		}
