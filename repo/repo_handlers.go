@@ -214,8 +214,13 @@ func (r *RepoHandler) ParseCheck(c *gin.Context) {
 }
 
 func (r *RepoHandler) Info(c *gin.Context) {
+	u := r.user(c)
 	c.JSON(http.StatusOK, gin.H{
-		"user": c.MustGet("user"),
+		"user": gin.H{
+			"name":  u.Name,
+			"login": u.Login,
+			"email": u.Email,
+		},
 		"repo": r.repo,
 	})
 }

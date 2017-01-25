@@ -12,7 +12,7 @@ type User struct {
 	Login string       `json:"login"`
 	Name  string       `json:"name"`
 	Email string       `json:"email"`
-	Token oauth2.Token `json:"-"`
+	Token oauth2.Token `json:"token"`
 }
 
 // AsAuthor returns a commit author for Github
