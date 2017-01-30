@@ -8,35 +8,35 @@ import (
 	git "gopkg.in/src-d/go-git.v3"
 )
 
-// TreeParser is an helper, creates a tree from the repo
-type TreeParser struct {
+// Parser is an helper, creates a tree from the repo
+type Parser struct {
 	index      map[string]int
 	Categories []*Category
 	Assets     []*Asset
 }
 
 // Parse executes the parsing on a repo
-func (t *TreeParser) Parse(tree *git.Tree) error {
-	t.index = make(map[string]int)
-	t.Categories = make([]*Category, 0)
-	if err := t.parse(tree, filterCat); err != nil {
+func (p *Parser) Parse(t *git.Tree) error {
+	p.index = make(map[string]int)
+	p.Categories = make([]*Category, 0)
+	if err := p.parse(t, filterCat); err != nil {
 		return err
 	}
-	if err := t.parse(tree, filterRes); err != nil {
+	if err := p.parse(t, filterRes); err != nil {
 		return err
 	}
-	sort.Sort(catSorter(t.Categories))
-	for i := range t.Categories {
-		sort.Sort(subSorter(t.Categories[i].subcategories))
-		for j := range t.Categories[i].subcategories {
-			sort.Sort(itemSorter(t.Categories[i].subcategories[j].items))
+	sort.Sort(catSorter(p.Categories))
+	for i := range p.Categories {
+		sort.Sort(subSorter(p.Categories[i].subcategories))
+		for j := range p.Categories[i].subcategories {
+			sort.Sort(itemSorter(p.Categories[i].subcategories[j].items))
 		}
 	}
 	return nil
 }
 
-func (t *TreeParser) parse(tree *git.Tree, fn func(name string) bool) error {
-	for iter := tree.Files(); ; {
+func (p *Parser) parse(t *git.Tree, fn func(name string) bool) error {
+	for iter := t.Files(); ; {
 		f, err := iter.Next()
 		if err != nil {
 			if err == io.EOF {
@@ -47,14 +47,14 @@ func (t *TreeParser) parse(tree *git.Tree, fn func(name string) bool) error {
 		if !fn(f.Name) {
 			continue
 		}
-		if err := t.parseFile(f); err != nil {
+		if err := p.parseFile(f); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (t *TreeParser) parseFile(f *git.File) error {
+func (p *Parser) parseFile(f *git.File) error {
 	contents, err := f.Contents()
 	if err != nil {
 		return parseError{f.Name, "read", err}
@@ -63,22 +63,22 @@ func (t *TreeParser) parseFile(f *git.File) error {
 	if err != nil {
 		return parseError{f.Name, "cmp", err}
 	}
-	p := strings.Split(f.Name, "/")
+	parts := strings.Split(f.Name, "/")
 	if err := cmp.SetPath("/" + f.Name); err != nil {
 		return parseError{f.Name, "path", err}
 	}
 	switch c := cmp.(type) {
 	case *Category:
-		t.index[p[1]] = len(t.Categories)
-		t.Categories = append(t.Categories, c)
+		p.index[parts[1]] = len(p.Categories)
+		p.Categories = append(p.Categories, c)
 	case *Subcategory:
-		t.Categories[t.index[p[1]]].Add(c)
+		p.Categories[p.index[parts[1]]].Add(c)
 	case *Item:
-		t.Categories[t.index[p[1]]].Sub(p[2]).AddItem(c)
+		p.Categories[p.index[parts[1]]].Sub(parts[2]).AddItem(c)
 	case *Checklist:
-		t.Categories[t.index[p[1]]].Sub(p[2]).SetChecks(c)
+		p.Categories[p.index[parts[1]]].Sub(parts[2]).SetChecks(c)
 	case *Asset:
-		t.Assets = append(t.Assets, c)
+		p.Assets = append(p.Assets, c)
 	default:
 		return parseError{f.Name, "type", "Invalid Path"}
 	}

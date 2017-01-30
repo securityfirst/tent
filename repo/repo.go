@@ -113,7 +113,7 @@ func (r *Repo) Pull() {
 		log.Println("Commit failed:", err)
 		return
 	}
-	var parser component.TreeParser
+	var parser component.Parser
 	if err := parser.Parse(r.commit.Tree()); err != nil {
 		log.Println("Parsing failed:", err)
 		return
