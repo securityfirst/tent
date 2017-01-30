@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
+	"github.com/securityfirst/tent/component"
 	"github.com/securityfirst/tent/models"
-	"github.com/securityfirst/tent/repo/component"
 )
 
 var (
@@ -287,20 +287,6 @@ func (r *RepoHandler) Show(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
-func (r *RepoHandler) AssetShow(c *gin.Context) {
-	c.Writer.WriteHeader(200)
-	c.Writer.WriteString(r.asset(c).Contents())
-}
-
-func (r *RepoHandler) AssetCreate(c *gin.Context) {
-	asset := r.asset(c)
-	if err := r.repo.Create(asset, r.user(c)); err != nil {
-		r.err(c, http.StatusInternalServerError, err)
-		return
-	}
-	c.JSON(201, gin.H{"id": asset.Id})
-}
-
 func (r *RepoHandler) Create(c *gin.Context) {
 	if err := r.repo.Create(r.cmp(c), r.user(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
@@ -322,6 +308,20 @@ func (r *RepoHandler) Delete(c *gin.Context) {
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+func (r *RepoHandler) AssetShow(c *gin.Context) {
+	c.Writer.WriteHeader(200)
+	c.Writer.WriteString(r.asset(c).Contents())
+}
+
+func (r *RepoHandler) AssetCreate(c *gin.Context) {
+	asset := r.asset(c)
+	if err := r.repo.Create(asset, r.user(c)); err != nil {
+		r.err(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(201, gin.H{"id": asset.Id})
 }
 
 func (r *RepoHandler) Tree(c *gin.Context) {

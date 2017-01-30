@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"gopkg.in/src-d/go-git.v3"
 
 	"github.com/google/go-github/github"
+	"github.com/securityfirst/tent/component"
 	"github.com/securityfirst/tent/models"
-	"github.com/securityfirst/tent/repo/component"
 	"golang.org/x/oauth2"
 )
 
@@ -38,16 +37,11 @@ func New(owner, name string) (*Repo, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Repo{
-		repo:  r,
-		name:  name,
-		owner: owner,
-	}, nil
+	return &Repo{repo: r, name: name, owner: owner}, nil
 }
 
 type Repo struct {
 	sync.RWMutex
-	shutdown   chan struct{}
 	owner      string
 	name       string
 	conf       *oauth2.Config
@@ -55,7 +49,6 @@ type Repo struct {
 	commit     *git.Commit
 	categories []*component.Category
 	assets     []*component.Asset
-	ticker     *time.Ticker
 }
 
 func (r *Repo) SetConf(c *oauth2.Config) { r.conf = c }
@@ -76,26 +69,6 @@ func (r *Repo) client(u *models.User) *github.Client {
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
 
-func (r *Repo) StartSync(interval time.Duration, trigger <-chan struct{}) {
-	r.ticker = time.NewTicker(interval)
-	r.shutdown = make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-r.ticker.C:
-				r.pull()
-			case <-trigger:
-				r.pull()
-			case <-r.shutdown:
-				r.ticker.Stop()
-				return
-			}
-		}
-	}()
-}
-
-func (r *Repo) StopSync() { close(r.shutdown) }
-
 func (r *Repo) hash() string {
 	if r.commit != nil {
 		return r.commit.Hash.String()
@@ -115,15 +88,20 @@ func (r *Repo) String() string {
 	return fmt.Sprintf("%s/%s %s", r.owner, r.name, r.hash())
 }
 
-func (r *Repo) pull() error {
+func (r *Repo) Pull() {
 	r.Lock()
 	defer r.Unlock()
 	if err := r.repo.PullDefault(); err != nil {
-		return err
+		log.Println("Pull failed:", err)
+		return
 	}
 	hash, err := r.repo.Remotes[git.DefaultRemoteName].Head()
-	if err != nil || (r.commit != nil && r.commit.Hash == hash) {
-		return err
+	if err != nil {
+		log.Println("Head failed:", err)
+		return
+	}
+	if r.commit != nil && r.commit.Hash == hash {
+		return
 	}
 	if r.commit != nil {
 		log.Println("Changing commit from", r.commit.Hash, "to", hash)
@@ -132,16 +110,16 @@ func (r *Repo) pull() error {
 	}
 	r.commit, err = r.repo.Commit(hash)
 	if err != nil {
-		return err
+		log.Println("Commit failed:", err)
+		return
 	}
 	var parser component.TreeParser
 	if err := parser.Parse(r.commit.Tree()); err != nil {
 		log.Println("Parsing failed:", err)
-		return err
+		return
 	}
 	r.categories = parser.Categories
 	r.assets = parser.Assets
-	return nil
 }
 
 func (r *Repo) file(c component.Component) (*git.File, error) {
@@ -234,7 +212,7 @@ func (r *Repo) request(c component.Component, action int, u *models.User) (err e
 		_, _, err = r.client(u).Repositories.DeleteFile(r.owner, r.name, file, commit)
 	}
 	if err == nil {
-		go r.pull()
+		go r.Pull()
 	}
 	return err
 }

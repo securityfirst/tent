@@ -37,12 +37,17 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 		hookCh = make(chan struct{})
 		h      = o.repo.Handler()
 	)
-
 	o.repo.SetConf(c.OAuth(root))
 	// Free handlers
 	root.GET(pathTree, h.ParseLocale, h.Tree)
 	// Hook for github
-	root.POST(pathUpdate, func(*gin.Context) { hookCh <- struct{}{} })
+	root.POST(pathUpdate, func(*gin.Context) {
+		select {
+		case hookCh <- struct{}{}:
+		default:
+			// discard
+		}
+	})
 
 	// Authorized handlers
 	authorized := root.Use(h.ParseLocale, func(c *gin.Context) {
@@ -79,9 +84,29 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	authorized.GET(pathAssetId, h.SetAsset, h.AssetShow)
 	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
 
-	o.repo.StartSync(10*time.Minute, hookCh)
+	loop(o.repo.Pull, 10*time.Minute, hookCh)
+
 	// Force first update
 	log.Info("First repo update...")
 	hookCh <- struct{}{}
 
+}
+
+func loop(action func(), every time.Duration, trigger <-chan struct{}) <-chan struct{} {
+	t := time.NewTicker(every)
+	stop := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-t.C:
+				action()
+			case <-trigger:
+				action()
+			case <-stop:
+				t.Stop()
+				return
+			}
+		}
+	}()
+	return stop
 }
