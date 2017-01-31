@@ -18,7 +18,7 @@ type Subcategory struct {
 
 func (s *Subcategory) Resource() Resource {
 	return Resource{
-		Slug: s.parent.Resource().Slug + "|" + s.Id,
+		Slug: s.parent.Resource().Slug + "_" + s.Id,
 		Content: []map[string]string{
 			map[string]string{"name": s.Name},
 		},

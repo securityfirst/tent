@@ -22,7 +22,7 @@ func (c *Checklist) Resource() Resource {
 		})
 	}
 	return Resource{
-		Slug:    c.parent.Resource().Slug + "|" + ".checks",
+		Slug:    c.parent.Resource().Slug + "_" + "_checks",
 		Content: content,
 	}
 }

@@ -21,7 +21,7 @@ type Item struct {
 
 func (i *Item) Resource() Resource {
 	return Resource{
-		Slug: i.parent.Resource().Slug + "|" + i.Id,
+		Slug: i.parent.Resource().Slug + "_" + i.Id,
 		Content: []map[string]string{
 			map[string]string{
 				"title":      i.Title,

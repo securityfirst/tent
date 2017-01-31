@@ -31,6 +31,11 @@ var config struct {
 	Github struct {
 		Handler, Project string
 	}
+	Transifex struct {
+		Project  string
+		Username string
+		Password string
+	}
 	auth.Config
 }
 
