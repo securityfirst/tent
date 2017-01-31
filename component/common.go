@@ -42,6 +42,12 @@ type Component interface {
 	SetContents(contents string) error
 	SHA() string
 	HasChildren() bool
+	Resource() Resource
+}
+
+type Resource struct {
+	Slug    string
+	Content []map[string]string
 }
 
 func newCmp(path string) (Component, error) {

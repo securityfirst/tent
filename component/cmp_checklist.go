@@ -13,6 +13,20 @@ type Checklist struct {
 	Checks []Check `json:"checks"`
 }
 
+func (c *Checklist) Resource() Resource {
+	var content = make([]map[string]string, len(c.Checks))
+	for _, c := range c.Checks {
+		content = append(content, map[string]string{
+			"difficulty": c.Difficulty,
+			"text":       c.Text,
+		})
+	}
+	return Resource{
+		Slug:    c.parent.Resource().Slug + "|" + ".checks",
+		Content: content,
+	}
+}
+
 type Check struct {
 	Difficulty string `json:"difficulty"`
 	Text       string `json:"text"`

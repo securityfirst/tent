@@ -19,6 +19,19 @@ type Item struct {
 	Order      float64 `json:"-"`
 }
 
+func (i *Item) Resource() Resource {
+	return Resource{
+		Slug: i.parent.Resource().Slug + "|" + i.Id,
+		Content: []map[string]string{
+			map[string]string{
+				"title":      i.Title,
+				"body":       i.Body,
+				"difficulty": i.Difficulty,
+			},
+		},
+	}
+}
+
 func (i *Item) SetParent(s *Subcategory) {
 	i.parent = s
 }

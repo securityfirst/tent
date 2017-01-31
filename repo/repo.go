@@ -69,6 +69,24 @@ func (r *Repo) client(u *models.User) *github.Client {
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
 
+func (r *Repo) All() []component.Component {
+	var list []component.Component
+	for _, cat := range r.categories {
+		list = append(list, cat)
+		for _, id := range cat.Subcategories() {
+			sub := cat.Sub(id)
+			list = append(list, sub)
+			for _, id := range sub.ItemNames() {
+				list = append(list, sub.Item(id))
+			}
+			if check := sub.Checks(); check.HasChildren() {
+				list = append(list, check)
+			}
+		}
+	}
+	return list
+}
+
 func (r *Repo) hash() string {
 	if r.commit != nil {
 		return r.commit.Hash.String()

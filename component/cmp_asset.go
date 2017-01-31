@@ -11,6 +11,10 @@ type Asset struct {
 	Content string `json:"content"`
 }
 
+func (a *Asset) Resource() Resource {
+	return Resource{}
+}
+
 func (*Asset) HasChildren() bool {
 	return false
 }

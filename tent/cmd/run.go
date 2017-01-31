@@ -22,10 +22,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/securityfirst/tent"
-	"github.com/securityfirst/tent/auth"
 	"github.com/securityfirst/tent/repo"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // runCmd respresents the run command
@@ -34,14 +32,6 @@ var runCmd = &cobra.Command{
 	Short: "Starts CMS",
 	Long:  `Starts the Tent CMS`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var config struct {
-			Port   int
-			Github struct {
-				Handler, Project string
-			}
-			auth.Config
-		}
-		viper.Unmarshal(&config)
 		if config.Id == "" || config.Secret == "" {
 			flag.Usage()
 			os.Exit(1)

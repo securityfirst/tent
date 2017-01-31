@@ -19,11 +19,20 @@ import (
 	"log"
 	"os"
 
+	"github.com/securityfirst/tent/auth"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+
+var config struct {
+	Port   int
+	Github struct {
+		Handler, Project string
+	}
+	auth.Config
+}
 
 var RootCmd = &cobra.Command{
 	Use:   "tent",
@@ -61,4 +70,7 @@ func initConfig() {
 		return
 	}
 	log.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.Unmarshal(&config); err != nil {
+		log.Fatal("Error:", err)
+	}
 }

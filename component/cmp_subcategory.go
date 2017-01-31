@@ -16,6 +16,15 @@ type Subcategory struct {
 	checklist *Checklist
 }
 
+func (s *Subcategory) Resource() Resource {
+	return Resource{
+		Slug: s.parent.Resource().Slug + "|" + s.Id,
+		Content: []map[string]string{
+			map[string]string{"name": s.Name},
+		},
+	}
+}
+
 func (s *Subcategory) HasChildren() bool {
 	return len(s.items) != 0
 }

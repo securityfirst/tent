@@ -15,6 +15,15 @@ type Category struct {
 	subcategories []*Subcategory
 }
 
+func (c *Category) Resource() Resource {
+	return Resource{
+		Slug: c.Id,
+		Content: []map[string]string{
+			map[string]string{"name": c.Name},
+		},
+	}
+}
+
 func (c *Category) HasChildren() bool {
 	return len(c.subcategories) != 0
 }
