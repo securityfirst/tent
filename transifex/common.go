@@ -26,7 +26,7 @@ type Language struct {
 	Reviewers    []string `json:"reviewers"`
 }
 
-type ResourceResp struct {
+type Response struct {
 	Added   int `json:"added"`
 	Updated int `json:"updated"`
 	Deleted int `json:"deleted"`

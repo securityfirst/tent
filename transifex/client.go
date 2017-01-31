@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -53,7 +52,7 @@ func (t TransifexAPI) ListResources() ([]Resource, error) {
 	return resources, nil
 }
 
-func (t TransifexAPI) CreateResource(newResource UploadResourceRequest) (*ResourceResp, error) {
+func (t TransifexAPI) CreateResource(newResource UploadResourceRequest) (*Response, error) {
 	data, err := json.Marshal(newResource)
 	if err != nil {
 		return nil, err
@@ -69,14 +68,14 @@ func (t TransifexAPI) CreateResource(newResource UploadResourceRequest) (*Resour
 	}
 
 	d := checkData.([]interface{})
-	return &ResourceResp{
+	return &Response{
 		int(d[0].(float64)),
 		int(d[1].(float64)),
 		int(d[2].(float64)),
 	}, nil
 }
 
-func (t TransifexAPI) UpdateResourceContent(slug, content string) (*ResourceResp, error) {
+func (t TransifexAPI) UpdateResourceContent(slug, content string) (*Response, error) {
 	data, err := json.Marshal(map[string]string{"slug": slug, "content": content})
 	if err != nil {
 		return nil, err
@@ -92,7 +91,7 @@ func (t TransifexAPI) UpdateResourceContent(slug, content string) (*ResourceResp
 		return nil, err
 	}
 	d := checkData.(map[string]interface{})
-	return &ResourceResp{
+	return &Response{
 		int(d["strings_added"].(float64)),
 		int(d["strings_updated"].(float64)),
 		int(d["strings_delete"].(float64)),
@@ -107,27 +106,27 @@ func (t TransifexAPI) ValidateConfiguration() error {
 	return nil
 }
 
-func (t TransifexAPI) UploadTranslationFile(slug, langCode, content string) error {
+func (t TransifexAPI) UploadTranslationFile(slug, langCode, content string) (*Response, error) {
 	data, err := json.Marshal(map[string]string{"content": content})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := t.execRequest("PUT", t.resourceUrl(slug, true)+"translation/"+langCode+"/", bytes.NewReader(data))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	checkData, err := t.checkValidJsonResponse(resp, fmt.Sprintf("Error adding %s translations for %s", langCode, slug))
-	dataMap := checkData.(map[string]interface{})
-	log.Printf(`Update %s %s Translation summary:
-
-Strings Added: %v
-Strings updated: %v
-Strings deleted: %v
-
-`, slug, langCode, dataMap["strings_added"], dataMap["strings_updated"], dataMap["strings_delete"])
-	return err
+	if err != nil {
+		return nil, err
+	}
+	d := checkData.(map[string]interface{})
+	return &Response{
+		int(d["strings_added"].(float64)),
+		int(d["strings_updated"].(float64)),
+		int(d["strings_delete"].(float64)),
+	}, nil
 }
 
 func (t TransifexAPI) SourceLanguage() (string, error) {
@@ -170,9 +169,9 @@ func (t TransifexAPI) DownloadTranslations(slug string) (map[string]string, erro
 	if err != nil {
 		return nil, err
 	}
-	fullLangs, langErr := t.Languages()
-	if langErr != nil {
-		return nil, langErr
+	fullLangs, err := t.Languages()
+	if err != nil {
+		return nil, err
 	}
 	langs := make([]string, len(fullLangs)+1)
 	langs[0] = sourceLang
@@ -183,9 +182,9 @@ func (t TransifexAPI) DownloadTranslations(slug string) (map[string]string, erro
 	translations := make(map[string]string, len(langs))
 	for _, lang := range langs {
 		url := fmt.Sprintf("%s/project/%s/resource/%s/translation/%s", t.ApiUrl, t.Project, slug, lang)
-		data, err2 := t.getJson(url, "Error downloing translations file")
-		if err2 != nil {
-			return nil, err2
+		data, err := t.getJson(url, "Error downloing translations file")
+		if err != nil {
+			return nil, err
 		}
 
 		translations[lang] = data.(map[string]interface{})["content"].(string)
@@ -216,12 +215,12 @@ func (t TransifexAPI) execRequest(method string, url string, requestData io.Read
 	if requestData != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}
-	resp, finalErr := t.client.Do(request)
+	resp, err := t.client.Do(request)
 	if resp.StatusCode > 400 {
 		return nil, fmt.Errorf("Response Code: %v\nResponse Status: %s", resp.StatusCode, resp.Status)
 	}
 
-	return resp, finalErr
+	return resp, err
 }
 
 func (t TransifexAPI) resourcesUrl(endSlash bool) string {

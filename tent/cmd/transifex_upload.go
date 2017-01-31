@@ -62,7 +62,7 @@ func uploadRun(cmd *cobra.Command, args []string) {
 		json.NewEncoder(buffer).Encode(resource.Content)
 
 		var (
-			resp *transifex.ResourceResp
+			resp *transifex.Response
 			err  error
 		)
 		if _, ok := existing[resource.Slug]; !ok {
