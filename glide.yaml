@@ -14,3 +14,5 @@ import:
   - '...'
 - package: github.com/russross/blackfriday
 - package: github.com/dgrijalva/jwt-go
+- package: github.com/spf13/viper
+- package: github.com/spf13/cobra

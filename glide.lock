@@ -1,5 +1,5 @@
-hash: 7350017ffd991b7af10e09bee967dc35e97f37e2dbf7286f1061f514d8953163
-updated: 2017-01-21T19:33:22.81246+01:00
+hash: d9f4f2378094590e020508562a5e529d5e923f21d6b7afb76fe685f0421ffacd
+updated: 2017-01-31T12:34:10.8360407+01:00
 imports:
 - name: github.com/cenkalti/log
   version: 958ee7afc008e65fe479a565819a25b30af0ec65
@@ -7,6 +7,12 @@ imports:
   - github.com\cenkalti\log
 - name: github.com/dgrijalva/jwt-go
   version: a601269ab70c205d26370c16f7c81e9017c14e04
+  subpackages:
+  - github.com\dgrijalva\jwt-go
+- name: github.com/fsnotify/fsnotify
+  version: a904159b9206978bb6d53fcc7a769e5cd726c737
+  subpackages:
+  - github.com\fsnotify\fsnotify
 - name: github.com/gin-gonic/gin
   version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
   subpackages:
@@ -27,14 +33,6 @@ imports:
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
   - github.com\google\go-querystring\query
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
-  subpackages:
-  - github.com\gorilla\context
-- name: github.com/gorilla/securecookie
-  version: fa5329f913702981df43dcb2a380bac429c810b5
-  subpackages:
-  - github.com\gorilla\securecookie
 - name: github.com/gorilla/sessions
   version: ca9ada44574153444b00d3fd9c8559e4cc95f896
   subpackages:
@@ -47,6 +45,26 @@ imports:
   version: ed905158d87462226a13fe39ddf685ea65f1c11f
   subpackages:
   - github.com\hashicorp\go-multierror
+- name: github.com/hashicorp/hcl
+  version: 88e9565e9965f4054f86c72ff1ad1bb50e560d6f
+  subpackages:
+  - github.com\hashicorp\hcl
+  - github.com\hashicorp\hcl\hcl\ast
+  - github.com\hashicorp\hcl\hcl\parser
+  - github.com\hashicorp\hcl\hcl\token
+  - github.com\hashicorp\hcl\json\parser
+  - github.com\hashicorp\hcl\hcl\scanner
+  - github.com\hashicorp\hcl\hcl\strconv
+  - github.com\hashicorp\hcl\json\scanner
+  - github.com\hashicorp\hcl\json\token
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+  subpackages:
+  - github.com\inconshreveable\mousetrap
+- name: github.com/magiconair/properties
+  version: b3b15ef068fd0b17ddf408a23669f20811d194d2
+  subpackages:
+  - github.com\magiconair\properties
 - name: github.com/manucorporat/sse
   version: ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
   subpackages:
@@ -55,6 +73,18 @@ imports:
   version: 30a891c33c7cde7b02a981314b4228ec99380cca
   subpackages:
   - github.com\mattn\go-isatty
+- name: github.com/mitchellh/mapstructure
+  version: db1efb556f84b25a0a13a04aad883943538ad2e0
+  subpackages:
+  - github.com\mitchellh\mapstructure
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+  subpackages:
+  - github.com\pelletier\go-buffruneio
+- name: github.com/pelletier/go-toml
+  version: a1f048ba24490f9b0674a67e1ce995d685cddf4a
+  subpackages:
+  - github.com\pelletier\go-toml
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
   subpackages:
@@ -67,6 +97,31 @@ imports:
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
   subpackages:
   - github.com\shurcooL\sanitized_anchor_name
+- name: github.com/spf13/afero
+  version: 72b31426848c6ef12a7a8e216708cb0d1530f074
+  subpackages:
+  - github.com\spf13\afero
+  - github.com\spf13\afero\mem
+- name: github.com/spf13/cast
+  version: d1139bab1c07d5ad390a65e7305876b3c1a8370b
+  subpackages:
+  - github.com\spf13\cast
+- name: github.com/spf13/cobra
+  version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
+  subpackages:
+  - github.com\spf13\cobra
+- name: github.com/spf13/jwalterweatherman
+  version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
+  subpackages:
+  - github.com\spf13\jwalterweatherman
+- name: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+  subpackages:
+  - github.com\spf13\pflag
+- name: github.com/spf13/viper
+  version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+  subpackages:
+  - github.com\spf13\viper
 - name: golang.org/x/crypto
   version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
   subpackages:
@@ -90,6 +145,11 @@ imports:
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - golang.org\x\sys\unix
+- name: golang.org/x/text
+  version: ece019dcfd29abcf65d0d1dfe145e8faad097640
+  subpackages:
+  - golang.org\x\text\transform
+  - golang.org\x\text\unicode\norm
 - name: google.golang.org/appengine
   version: 596d349602aa23355ff46ade49ebfeb99c0fc550
   subpackages:

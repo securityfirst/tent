@@ -44,6 +44,7 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	root.POST(pathUpdate, func(*gin.Context) {
 		select {
 		case hookCh <- struct{}{}:
+			// starts an update
 		default:
 			// discard
 		}
