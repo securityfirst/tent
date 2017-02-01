@@ -10,10 +10,7 @@ import (
 	"strings"
 )
 
-const (
-	ApiUrl       = "https://www.transifex.com/api/2"
-	KeyValueJson = "KEYVALUEJSON"
-)
+const KeyValueJson = "KEYVALUEJSON"
 
 type Client struct {
 	client  *http.Client

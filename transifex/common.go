@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+const ApiUrl = "https://www.transifex.com/api/2"
+
 type BaseResource struct {
 	Slug     string `json:"slug"`
 	Name     string `json:"name"`
