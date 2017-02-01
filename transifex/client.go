@@ -20,10 +20,10 @@ type Client struct {
 	Project Project
 }
 
-func NewClient(project, username, password string) Client {
+func NewClient(project Project, username, password string) Client {
 	return Client{
 		client:  &http.Client{Transport: auth{username, password}},
-		Project: Project(project),
+		Project: project,
 	}
 }
 

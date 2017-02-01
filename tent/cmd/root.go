@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,7 +33,7 @@ var config struct {
 		Handler, Project string
 	}
 	Transifex struct {
-		Project  string
+		Project  transifex.Project
 		Username string
 		Password string
 	}
