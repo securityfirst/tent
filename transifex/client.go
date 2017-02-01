@@ -11,126 +11,102 @@ import (
 )
 
 const (
-	KeyValueJson string = "KEYVALUEJSON"
+	ApiUrl       = "https://www.transifex.com/api/2"
+	KeyValueJson = "KEYVALUEJSON"
 )
 
-type TransifexAPI struct {
-	client   *http.Client
-	ApiUrl   string
-	Project  string
-	username string
-	password string
+type Client struct {
+	client  *http.Client
+	Project Project
 }
 
-func NewTransifexAPI(project, username, password string) TransifexAPI {
-	return TransifexAPI{
-		client:   http.DefaultClient,
-		ApiUrl:   "https://www.transifex.com/api/2",
-		Project:  project,
-		username: username,
-		password: password,
+func NewClient(project, username, password string) Client {
+	return Client{
+		client:  &http.Client{Transport: auth{username, password}},
+		Project: Project(project),
 	}
 }
 
-func (t TransifexAPI) ListResources() ([]Resource, error) {
-	resp, err := t.execRequest("GET", t.resourcesUrl(true), nil)
+func (c Client) ListResources() ([]Resource, error) {
+	resp, err := c.execute("GET", c.Project.list(), nil)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	var resources []Resource
+	_, err = unmarshal(resp, &resources, "Failed to list resources")
 	if err != nil {
 		return nil, err
 	}
-	var resources []Resource
-
-	if err := json.Unmarshal(data, &resources); err != nil {
-		return nil, err
-	}
-
 	return resources, nil
 }
 
-func (t TransifexAPI) CreateResource(newResource UploadResourceRequest) (*Response, error) {
+func (c Client) CreateResource(newResource UploadResourceRequest) (*Response, error) {
 	data, err := json.Marshal(newResource)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := t.execRequest("POST", t.resourcesUrl(false), bytes.NewReader(data))
+	resp, err := c.execute("POST", c.Project.list(), bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
 
-	checkData, err := t.checkValidJsonResponse(resp, fmt.Sprintf("Failed to create resource: %s\n", newResource.Slug))
+	var r Response
+	_, err = unmarshal(resp, &r, fmt.Sprintf("Failed to create resource: %s\n", newResource.Slug))
 	if err != nil {
 		return nil, err
 	}
 
-	d := checkData.([]interface{})
-	return &Response{
-		int(d[0].(float64)),
-		int(d[1].(float64)),
-		int(d[2].(float64)),
-	}, nil
+	return &r, nil
 }
 
-func (t TransifexAPI) UpdateResourceContent(slug, content string) (*Response, error) {
+func (c Client) UpdateResourceContent(slug, content string) (*Response, error) {
 	data, err := json.Marshal(map[string]string{"slug": slug, "content": content})
 	if err != nil {
 		return nil, err
 	}
-
-	resp, err := t.execRequest("PUT", t.resourceUrl(slug, true)+"content/", bytes.NewReader(data))
+	resp, err := c.execute("PUT", c.Project.resource(slug)+"/content/", bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
 
-	checkData, err := t.checkValidJsonResponse(resp, fmt.Sprintf("Error updating content of %s", slug))
+	var r Response
+	_, err = unmarshal(resp, &r, fmt.Sprintf("Error updating content of %s", slug))
 	if err != nil {
 		return nil, err
 	}
-	d := checkData.(map[string]interface{})
-	return &Response{
-		int(d["strings_added"].(float64)),
-		int(d["strings_updated"].(float64)),
-		int(d["strings_delete"].(float64)),
-	}, nil
+	return &r, nil
 }
 
-func (t TransifexAPI) ValidateConfiguration() error {
+func (c Client) ValidateConfiguration() error {
 	msg := "Error occurred when checking credentials. Please check credentials and network connection"
-	if _, err := t.SourceLanguage(); err != nil {
+	if _, err := c.SourceLanguage(); err != nil {
 		return fmt.Errorf(msg)
 	}
 	return nil
 }
 
-func (t TransifexAPI) UploadTranslationFile(slug, langCode, content string) (*Response, error) {
+func (c Client) UploadTranslationFile(slug, langCode, content string) (*Response, error) {
 	data, err := json.Marshal(map[string]string{"content": content})
 	if err != nil {
 		return nil, err
 	}
-
-	resp, err := t.execRequest("PUT", t.resourceUrl(slug, true)+"translation/"+langCode+"/", bytes.NewReader(data))
+	resp, err := c.execute("PUT", c.Project.resource(slug)+"/translation/"+langCode+"/", bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
 
-	checkData, err := t.checkValidJsonResponse(resp, fmt.Sprintf("Error adding %s translations for %s", langCode, slug))
+	var r Response
+	_, err = unmarshal(resp, &r, fmt.Sprintf("Error adding %s translations for %s", langCode, slug))
 	if err != nil {
 		return nil, err
 	}
-	d := checkData.(map[string]interface{})
-	return &Response{
-		int(d["strings_added"].(float64)),
-		int(d["strings_updated"].(float64)),
-		int(d["strings_delete"].(float64)),
-	}, nil
+	return nil, err
 }
 
-func (t TransifexAPI) SourceLanguage() (string, error) {
-	jsonData, err := t.getJson(t.ApiUrl+"/project/"+t.Project, "Error loading SourceLanguage")
+func (c Client) SourceLanguage() (string, error) {
+	jsonData, err := c.getJson(c.Project.root(), "Error loading SourceLanguage")
 	if err != nil {
 		return "", err
 	}
@@ -145,8 +121,8 @@ func (t TransifexAPI) SourceLanguage() (string, error) {
 	return sourceLang, nil
 }
 
-func (t TransifexAPI) Languages() ([]Language, error) {
-	resp, err := t.execRequest("GET", fmt.Sprintf("%s/project/%s/languages", t.ApiUrl, t.Project), nil)
+func (c Client) Languages() ([]Language, error) {
+	resp, err := c.execute("GET", fmt.Sprintf("%s/project/%s/languages", ApiUrl, c.Project), nil)
 
 	if err != nil {
 		return nil, err
@@ -164,12 +140,12 @@ func (t TransifexAPI) Languages() ([]Language, error) {
 
 	return jsonData, nil
 }
-func (t TransifexAPI) DownloadTranslations(slug string) (map[string]string, error) {
-	sourceLang, err := t.SourceLanguage()
+func (c Client) DownloadTranslations(slug string) (map[string]string, error) {
+	sourceLang, err := c.SourceLanguage()
 	if err != nil {
 		return nil, err
 	}
-	fullLangs, err := t.Languages()
+	fullLangs, err := c.Languages()
 	if err != nil {
 		return nil, err
 	}
@@ -181,8 +157,8 @@ func (t TransifexAPI) DownloadTranslations(slug string) (map[string]string, erro
 
 	translations := make(map[string]string, len(langs))
 	for _, lang := range langs {
-		url := fmt.Sprintf("%s/project/%s/resource/%s/translation/%s", t.ApiUrl, t.Project, slug, lang)
-		data, err := t.getJson(url, "Error downloing translations file")
+		url := fmt.Sprintf("%s/project/%s/resource/%s/translation/%s", ApiUrl, c.Project, slug, lang)
+		data, err := c.getJson(url, "Error downloing translations file")
 		if err != nil {
 			return nil, err
 		}
@@ -192,13 +168,13 @@ func (t TransifexAPI) DownloadTranslations(slug string) (map[string]string, erro
 	return translations, nil
 }
 
-func (t TransifexAPI) getJson(url string, errMsg string) (interface{}, error) {
-	resp, err := t.execRequest("GET", url, nil)
+func (c Client) getJson(url string, errMsg string) (interface{}, error) {
+	resp, err := c.execute("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	jsonData, err := t.checkValidJsonResponse(resp, errMsg)
+	jsonData, err := unmarshal(resp, nil, errMsg)
 	if err != nil {
 		return nil, err
 	}
@@ -206,50 +182,18 @@ func (t TransifexAPI) getJson(url string, errMsg string) (interface{}, error) {
 	return jsonData, nil
 }
 
-func (t TransifexAPI) execRequest(method string, url string, requestData io.Reader) (*http.Response, error) {
+func (c Client) execute(method string, url string, requestData io.Reader) (*http.Response, error) {
 	request, err := http.NewRequest(method, url, requestData)
 	if err != nil {
 		return nil, err
 	}
-	request.SetBasicAuth(t.username, t.password)
 	if requestData != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}
-	resp, err := t.client.Do(request)
+	resp, err := c.client.Do(request)
 	if resp.StatusCode > 400 {
 		return nil, fmt.Errorf("Response Code: %v\nResponse Status: %s", resp.StatusCode, resp.Status)
 	}
 
 	return resp, err
-}
-
-func (t TransifexAPI) resourcesUrl(endSlash bool) string {
-	url := fmt.Sprintf("%s/project/%s/resources", t.ApiUrl, t.Project)
-	if endSlash {
-		return url + "/"
-	}
-	return url
-}
-
-func (t TransifexAPI) resourceUrl(slug string, endSlash bool) string {
-	url := fmt.Sprintf("%s/project/%s/resource/%s", t.ApiUrl, t.Project, slug)
-	if endSlash {
-		return url + "/"
-	}
-	return url
-}
-
-func (t TransifexAPI) checkValidJsonResponse(resp *http.Response, errorMsg string) (interface{}, error) {
-	responseData, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var jsonData interface{}
-	if err := json.Unmarshal(responseData, &jsonData); err != nil {
-		return nil, fmt.Errorf(errorMsg + "\n\nError:\n" + string(responseData))
-	}
-
-	return jsonData, nil
 }

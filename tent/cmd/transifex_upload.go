@@ -43,8 +43,8 @@ func uploadRun(cmd *cobra.Command, args []string) {
 	}
 	r.Pull()
 
-	api := transifex.NewTransifexAPI(config.Transifex.Project, config.Transifex.Username, config.Transifex.Password)
-	resources, err := api.ListResources()
+	client := transifex.NewClient(config.Transifex.Project, config.Transifex.Username, config.Transifex.Password)
+	resources, err := client.ListResources()
 	if err != nil {
 		log.Fatalf("Resource list: %s", err)
 	}
@@ -66,7 +66,7 @@ func uploadRun(cmd *cobra.Command, args []string) {
 			err  error
 		)
 		if _, ok := existing[resource.Slug]; !ok {
-			resp, err = api.CreateResource(transifex.UploadResourceRequest{
+			resp, err = client.CreateResource(transifex.UploadResourceRequest{
 				BaseResource: transifex.BaseResource{
 					Slug:     resource.Slug,
 					Name:     resource.Slug + ".json",
@@ -75,7 +75,7 @@ func uploadRun(cmd *cobra.Command, args []string) {
 				Content: buffer.String(),
 			})
 		} else {
-			resp, err = api.UpdateResourceContent(resource.Slug, buffer.String())
+			resp, err = client.UpdateResourceContent(resource.Slug, buffer.String())
 		}
 
 		if err != nil {
