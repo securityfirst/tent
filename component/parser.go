@@ -82,7 +82,7 @@ func (p *Parser) parseFile(f *git.File) error {
 	default:
 		return parseError{f.Name, "type", "Invalid Path"}
 	}
-	if err := cmp.SetContents(contents); err != nil {
+	if err := cmp.SetContents(strings.TrimSpace(contents)); err != nil {
 		return parseError{f.Name, "contents", err}
 	}
 	return nil
