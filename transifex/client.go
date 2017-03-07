@@ -188,9 +188,12 @@ func (c Client) execute(method string, url string, requestData io.Reader) (*http
 		request.Header.Set("Content-Type", "application/json")
 	}
 	resp, err := c.client.Do(request)
+	if err != nil {
+		return nil, err
+	}
 	if resp.StatusCode > 400 {
 		return nil, fmt.Errorf("Response Code: %v\nResponse Status: %s", resp.StatusCode, resp.Status)
 	}
 
-	return resp, err
+	return resp, nil
 }
