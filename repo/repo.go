@@ -7,7 +7,7 @@ import (
 	"log"
 	"sync"
 
-	"gopkg.in/src-d/go-git.v3"
+	git "gopkg.in/src-d/go-git.v3"
 
 	"github.com/google/go-github/github"
 	"github.com/securityfirst/tent/component"
@@ -47,7 +47,7 @@ type Repo struct {
 	conf       *oauth2.Config
 	repo       *git.Repository
 	commit     *git.Commit
-	categories []*component.Category
+	categories map[string][]*component.Category
 	assets     []*component.Asset
 }
 
@@ -57,7 +57,7 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 	r.RLock()
 	defer r.RUnlock()
 	var s = make([]interface{}, 0, len(r.categories))
-	for _, i := range r.Categories() {
+	for _, i := range r.Categories(locale) {
 		s = append(s, r.Category(i, locale).Tree(html))
 	}
 	return s
@@ -69,9 +69,9 @@ func (r *Repo) client(u *models.User) *github.Client {
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
 
-func (r *Repo) All() []component.Component {
+func (r *Repo) All(locale string) []component.Component {
 	var list []component.Component
-	for _, cat := range r.categories {
+	for _, cat := range r.categories[locale] {
 		list = append(list, cat)
 		for _, id := range cat.Subcategories() {
 			sub := cat.Sub(id)
@@ -136,8 +136,8 @@ func (r *Repo) Pull() {
 		log.Println("Parsing failed:", err)
 		return
 	}
-	r.categories = parser.Categories
-	r.assets = parser.Assets
+	r.categories = parser.Categories()
+	r.assets = parser.Assets()
 }
 
 func (r *Repo) file(c component.Component) (*git.File, error) {
@@ -173,19 +173,19 @@ func (r *Repo) Category(cat, locale string) *component.Category {
 	r.RLock()
 	defer r.RUnlock()
 
-	for _, c := range r.categories {
-		if c.Id == cat && c.Locale == locale {
+	for _, c := range r.categories[locale] {
+		if c.Id == cat {
 			return c
 		}
 	}
 	return nil
 }
 
-func (r *Repo) Categories() []string {
+func (r *Repo) Categories(locale string) []string {
 	r.RLock()
 	defer r.RUnlock()
-	var s = make([]string, 0, len(r.categories))
-	for _, v := range r.categories {
+	var s []string
+	for _, v := range r.categories[locale] {
 		s = append(s, v.Id)
 	}
 	return s

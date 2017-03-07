@@ -11,25 +11,25 @@ import (
 // Parser is an helper, creates a tree from the repo
 type Parser struct {
 	index      map[string]int
-	Categories []*Category
-	Assets     []*Asset
+	categories []*Category
+	assets     []*Asset
 }
 
 // Parse executes the parsing on a repo
 func (p *Parser) Parse(t *git.Tree) error {
 	p.index = make(map[string]int)
-	p.Categories = make([]*Category, 0)
+	p.categories = make([]*Category, 0)
 	if err := p.parse(t, filterCat); err != nil {
 		return err
 	}
 	if err := p.parse(t, filterRes); err != nil {
 		return err
 	}
-	sort.Sort(catSorter(p.Categories))
-	for i := range p.Categories {
-		sort.Sort(subSorter(p.Categories[i].subcategories))
-		for j := range p.Categories[i].subcategories {
-			sort.Sort(itemSorter(p.Categories[i].subcategories[j].items))
+	sort.Sort(catSorter(p.categories))
+	for i := range p.categories {
+		sort.Sort(subSorter(p.categories[i].subcategories))
+		for j := range p.categories[i].subcategories {
+			sort.Sort(itemSorter(p.categories[i].subcategories[j].items))
 		}
 	}
 	return nil
@@ -69,16 +69,16 @@ func (p *Parser) parseFile(f *git.File) error {
 	}
 	switch c := cmp.(type) {
 	case *Category:
-		p.index[parts[1]] = len(p.Categories)
-		p.Categories = append(p.Categories, c)
+		p.index[parts[1]] = len(p.categories)
+		p.categories = append(p.categories, c)
 	case *Subcategory:
-		p.Categories[p.index[parts[1]]].Add(c)
+		p.categories[p.index[parts[1]]].Add(c)
 	case *Item:
-		p.Categories[p.index[parts[1]]].Sub(parts[2]).AddItem(c)
+		p.categories[p.index[parts[1]]].Sub(parts[2]).AddItem(c)
 	case *Checklist:
-		p.Categories[p.index[parts[1]]].Sub(parts[2]).SetChecks(c)
+		p.categories[p.index[parts[1]]].Sub(parts[2]).SetChecks(c)
 	case *Asset:
-		p.Assets = append(p.Assets, c)
+		p.assets = append(p.assets, c)
 	default:
 		return parseError{f.Name, "type", "Invalid Path"}
 	}
@@ -86,4 +86,16 @@ func (p *Parser) parseFile(f *git.File) error {
 		return parseError{f.Name, "contents", err}
 	}
 	return nil
+}
+
+func (p *Parser) Categories() map[string][]*Category {
+	var res = make(map[string][]*Category)
+	for _, cat := range p.categories {
+		res[cat.Locale] = append(res[cat.Locale], cat)
+	}
+	return res
+}
+
+func (p *Parser) Assets() []*Asset {
+	return p.assets
 }

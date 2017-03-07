@@ -251,7 +251,7 @@ func (r *RepoHandler) Info(c *gin.Context) {
 }
 
 func (r *RepoHandler) Root(c *gin.Context) {
-	cats := r.repo.Categories()
+	cats := r.repo.Categories(r.locale(c))
 	sort.Strings(cats)
 	c.JSON(http.StatusOK, gin.H{
 		"categories": cats,

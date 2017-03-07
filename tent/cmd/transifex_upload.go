@@ -56,7 +56,7 @@ func uploadRun(cmd *cobra.Command, args []string) {
 
 	var buffer = bytes.NewBuffer(nil)
 
-	for _, cmp := range r.All() {
+	for _, cmp := range r.All("en") {
 		buffer.Reset()
 		resource := cmp.Resource()
 		json.NewEncoder(buffer).Encode(resource.Content)
