@@ -10,14 +10,14 @@ import (
 
 // Parser is an helper, creates a tree from the repo
 type Parser struct {
-	index      map[string]int
+	index      map[[2]string]int
 	categories []*Category
 	assets     []*Asset
 }
 
 // Parse executes the parsing on a repo
 func (p *Parser) Parse(t *git.Tree) error {
-	p.index = make(map[string]int)
+	p.index = make(map[[2]string]int)
 	p.categories = make([]*Category, 0)
 	if err := p.parse(t, filterCat); err != nil {
 		return err
@@ -67,20 +67,37 @@ func (p *Parser) parseFile(f *git.File) error {
 	if err := cmp.SetPath("/" + f.Name); err != nil {
 		return parseError{f.Name, "path", err}
 	}
-	switch c := cmp.(type) {
-	case *Category:
-		p.index[parts[1]] = len(p.categories)
-		p.categories = append(p.categories, c)
-	case *Subcategory:
-		p.categories[p.index[parts[1]]].Add(c)
-	case *Item:
-		p.categories[p.index[parts[1]]].Sub(parts[2]).AddItem(c)
-	case *Checklist:
-		p.categories[p.index[parts[1]]].Sub(parts[2]).SetChecks(c)
-	case *Asset:
-		p.assets = append(p.assets, c)
-	default:
-		return parseError{f.Name, "type", "Invalid Path"}
+
+	idx := [2]string{parts[1], f.Name[9:11]}
+	if cat, ok := cmp.(*Category); ok {
+		p.index[idx] = len(p.categories)
+		p.categories = append(p.categories, cat)
+	} else {
+		cat := p.categories[p.index[idx]]
+		if cat == nil {
+			return parseError{f.Name, "path", "Invalid cat"}
+		}
+		switch c := cmp.(type) {
+		case *Subcategory:
+			cat.Add(c)
+		case *Item:
+			sub := cat.Sub(parts[2])
+			if sub == nil {
+				return parseError{f.Name, "path", "Invalid sub"}
+			}
+			sub.AddItem(c)
+
+		case *Checklist:
+			sub := cat.Sub(parts[2])
+			if sub == nil {
+				return parseError{f.Name, "path", "Invalid sub"}
+			}
+			sub.SetChecks(c)
+		case *Asset:
+			p.assets = append(p.assets, c)
+		default:
+			return parseError{f.Name, "type", "Invalid Path"}
+		}
 	}
 	if err := cmp.SetContents(strings.TrimSpace(contents)); err != nil {
 		return parseError{f.Name, "contents", err}
