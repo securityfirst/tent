@@ -51,6 +51,9 @@ func newCmp(path string) (Component, error) {
 	p := strings.Split(path, "/")
 	switch l := len(p); l {
 	case 3:
+		if formPath.MatchString(path) {
+			return new(Form), nil
+		}
 		if p[1] == "assets" && isImage(p[2]) {
 			return new(Asset), nil
 		}
