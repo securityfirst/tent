@@ -32,7 +32,7 @@ var assetPath = regexp.MustCompile("/assets/([^/]+)")
 func (i *Asset) SetPath(filepath string) error {
 	p := assetPath.FindStringSubmatch(filepath)
 	if len(p) == 0 {
-		return ErrInvalid
+		return ErrContent
 	}
 	i.Id = p[1]
 	return nil

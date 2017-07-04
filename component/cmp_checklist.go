@@ -33,6 +33,10 @@ type Check struct {
 	NoCheck    bool   `json:"no_check"`
 }
 
+func (c *Check) order() []string { return []string{"Text", "Difficulty", "NoCheck"} }
+func (c *Check) pointers() args  { return args{&c.Text, &c.Difficulty, &c.NoCheck} }
+func (c *Check) values() args    { return args{c.Text, c.Difficulty, c.NoCheck} }
+
 func (c *Checklist) SetParent(s *Subcategory) {
 	c.parent = s
 }
@@ -54,18 +58,18 @@ var checklistPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/.che
 func (*Checklist) SetPath(filepath string) error {
 	p := checklistPath.FindString(filepath)
 	if len(p) == 0 {
-		return ErrInvalid
+		return ErrContent
 	}
 	return nil
 }
 
 func (c *Checklist) Contents() string {
 	b := bytes.NewBuffer(nil)
-	for i, v := range c.Checks {
+	for i := range c.Checks {
 		if i != 0 {
 			fmt.Fprint(b, bodySeparator)
 		}
-		fmt.Fprint(b, getMeta(checkOrder, args{v.Text, v.Difficulty, v.NoCheck}))
+		fmt.Fprint(b, getMeta(&c.Checks[i]))
 	}
 	return b.String()
 }
@@ -80,10 +84,10 @@ func (c *Checklist) SetContents(contents string) error {
 	parts := strings.Split(contents, bodySeparator)
 	var checks = make([]Check, len(parts))
 	for i, v := range parts {
-		if err := checkMeta(v, checkOrder); err != nil {
+		if err := checkMeta(v, &checks[i]); err != nil {
 			return err
 		}
-		setMeta(v, checkOrder, args{&checks[i].Text, &checks[i].Difficulty, &checks[i].NoCheck})
+		setMeta(v, &checks[i])
 	}
 	c.Checks = checks
 	return nil

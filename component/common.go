@@ -19,19 +19,16 @@ var commitMsg = map[int]string{
 	actionDelete: "Delete",
 }
 
-var ErrInvalid = errors.New("Invalid content")
+var (
+	ErrContent = errors.New("Invalid content")
+	ErrSlug    = errors.New("Invalid Slug")
+)
 
 const (
 	bodySeparator = "\n\n"
 	suffixMeta    = ".metadata"
 	suffixChecks  = ".checks"
 	fileExt       = ".md"
-)
-
-var (
-	categoryOrder = []string{"Name", "Order"}
-	itemOrder     = []string{"Title", "Difficulty", "Order"}
-	checkOrder    = []string{"Text", "Difficulty", "NoCheck"}
 )
 
 // A Component is en element of the resource tree
@@ -54,15 +51,15 @@ func newCmp(path string) (Component, error) {
 	p := strings.Split(path, "/")
 	switch l := len(p); l {
 	case 3:
-		if isImage(p[2]) {
+		if p[1] == "assets" && isImage(p[2]) {
 			return new(Asset), nil
 		}
-		return nil, ErrInvalid
+		return nil, ErrContent
 	case 4:
 		return new(Category), nil
 	case 5:
 		if !IsMd(p[4]) {
-			return nil, ErrInvalid
+			return nil, ErrContent
 		}
 		switch p[4][:len(p[4])-len(fileExt)] {
 		case suffixMeta:
@@ -73,7 +70,7 @@ func newCmp(path string) (Component, error) {
 			return new(Item), nil
 		}
 	default:
-		return nil, ErrInvalid
+		return nil, ErrContent
 	}
 }
 

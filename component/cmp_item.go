@@ -53,29 +53,29 @@ var itemPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/([^/]+).m
 func (i *Item) SetPath(filepath string) error {
 	p := itemPath.FindStringSubmatch(filepath)
 	if len(p) == 0 || p[1] == suffixMeta {
-		return ErrInvalid
+		return ErrContent
 	}
 	i.Id = p[1]
 	return nil
 }
 
+func (i *Item) order() []string { return []string{"Title", "Difficulty", "Order"} }
+func (i *Item) pointers() args  { return args{&i.Title, &i.Difficulty, &i.Order} }
+func (i *Item) values() args    { return args{i.Title, i.Difficulty, i.Order} }
+
 func (i *Item) Contents() string {
-	return fmt.Sprint(getMeta(itemOrder, args{i.Title, i.Difficulty, i.Order}), bodySeparator, i.Body)
+	return fmt.Sprint(getMeta(i), bodySeparator, i.Body)
 }
 
 func (i *Item) SetContents(contents string) error {
 	parts := strings.SplitN(strings.Trim(contents, "\n"), bodySeparator, 2)
 	if len(parts) != 2 {
-		return ErrInvalid
+		return ErrContent
 	}
-	if err := checkMeta(parts[0], itemOrder); err != nil {
+	if err := checkMeta(parts[0], i); err != nil {
 		return err
 	}
 	i.Body = parts[1]
 	i.htmlBody = string(blackfriday.MarkdownCommon([]byte(i.Body)))
-	return setMeta(
-		parts[0],
-		itemOrder,
-		[]interface{}{&i.Title, &i.Difficulty, &i.Order},
-	)
+	return setMeta(parts[0], i)
 }

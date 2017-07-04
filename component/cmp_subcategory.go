@@ -141,22 +141,24 @@ var subPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/([^/]+)/.metadat
 func (s *Subcategory) SetPath(filepath string) error {
 	p := subPath.FindStringSubmatch(filepath)
 	if len(p) == 0 {
-		return ErrInvalid
+		return ErrContent
 	}
 	s.Id = p[1]
 	return nil
 }
 
-func (s *Subcategory) Contents() string {
-	return getMeta(categoryOrder, args{s.Name, s.Order})
-}
+func (s *Subcategory) order() []string { return []string{"Name", "Order"} }
+func (s *Subcategory) pointers() args  { return args{&s.Name, &s.Order} }
+func (s *Subcategory) values() args    { return args{s.Name, s.Order} }
+
+func (s *Subcategory) Contents() string { return getMeta(s) }
 
 func (s *Subcategory) SetContents(contents string) error {
-	if err := checkMeta(contents, categoryOrder); err != nil {
+	if err := checkMeta(contents, s); err != nil {
 		return err
 	}
 	if s.checklist == nil {
 		s.checklist = new(Checklist)
 	}
-	return setMeta(contents, categoryOrder, args{&s.Name, &s.Order})
+	return setMeta(contents, s)
 }
