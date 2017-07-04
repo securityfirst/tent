@@ -1,193 +1,143 @@
-hash: d9f4f2378094590e020508562a5e529d5e923f21d6b7afb76fe685f0421ffacd
-updated: 2017-01-31T12:34:10.8360407+01:00
+hash: a4f06486ef642235cffe7297c5838bf00d86bd6a541b2c4eb59ebc8e365cc863
+updated: 2017-07-03T13:27:55.4205304+02:00
 imports:
 - name: github.com/cenkalti/log
   version: 958ee7afc008e65fe479a565819a25b30af0ec65
-  subpackages:
-  - github.com\cenkalti\log
 - name: github.com/dgrijalva/jwt-go
   version: a601269ab70c205d26370c16f7c81e9017c14e04
-  subpackages:
-  - github.com\dgrijalva\jwt-go
 - name: github.com/fsnotify/fsnotify
   version: a904159b9206978bb6d53fcc7a769e5cd726c737
-  subpackages:
-  - github.com\fsnotify\fsnotify
 - name: github.com/gin-gonic/gin
   version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
   subpackages:
   - '...'
-  - github.com\gin-gonic\gin
-  - github.com\gin-gonic\gin\binding
-  - github.com\gin-gonic\gin\render
+  - binding
+  - render
 - name: github.com/golang/protobuf
   version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
   - proto
-  - github.com\golang\protobuf\proto
 - name: github.com/google/go-github
   version: e4194fe26c3379788dc1671da379f719351f093e
   subpackages:
-  - github.com\google\go-github\github
+  - github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
-  - github.com\google\go-querystring\query
+  - query
 - name: github.com/gorilla/sessions
   version: ca9ada44574153444b00d3fd9c8559e4cc95f896
   subpackages:
   - github.com\gorilla\sessions
 - name: github.com/hashicorp/errwrap
   version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
-  subpackages:
-  - github.com\hashicorp\errwrap
 - name: github.com/hashicorp/go-multierror
   version: ed905158d87462226a13fe39ddf685ea65f1c11f
-  subpackages:
-  - github.com\hashicorp\go-multierror
 - name: github.com/hashicorp/hcl
   version: 88e9565e9965f4054f86c72ff1ad1bb50e560d6f
   subpackages:
-  - github.com\hashicorp\hcl
-  - github.com\hashicorp\hcl\hcl\ast
-  - github.com\hashicorp\hcl\hcl\parser
-  - github.com\hashicorp\hcl\hcl\token
-  - github.com\hashicorp\hcl\json\parser
-  - github.com\hashicorp\hcl\hcl\scanner
-  - github.com\hashicorp\hcl\hcl\strconv
-  - github.com\hashicorp\hcl\json\scanner
-  - github.com\hashicorp\hcl\json\token
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
-  subpackages:
-  - github.com\inconshreveable\mousetrap
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
-  subpackages:
-  - github.com\magiconair\properties
 - name: github.com/manucorporat/sse
   version: ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
-  subpackages:
-  - github.com\manucorporat\sse
 - name: github.com/mattn/go-isatty
   version: 30a891c33c7cde7b02a981314b4228ec99380cca
-  subpackages:
-  - github.com\mattn\go-isatty
 - name: github.com/mitchellh/mapstructure
   version: db1efb556f84b25a0a13a04aad883943538ad2e0
-  subpackages:
-  - github.com\mitchellh\mapstructure
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
-  subpackages:
-  - github.com\pelletier\go-buffruneio
 - name: github.com/pelletier/go-toml
   version: a1f048ba24490f9b0674a67e1ce995d685cddf4a
-  subpackages:
-  - github.com\pelletier\go-toml
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
-  subpackages:
-  - github.com\russross\blackfriday
 - name: github.com/sergi/go-diff
   version: ce4a6e0e61d6908298eed511fc0683062d4c7f3b
   subpackages:
-  - github.com\sergi\go-diff\diffmatchpatch
+  - diffmatchpatch
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
-  subpackages:
-  - github.com\shurcooL\sanitized_anchor_name
 - name: github.com/spf13/afero
   version: 72b31426848c6ef12a7a8e216708cb0d1530f074
   subpackages:
-  - github.com\spf13\afero
-  - github.com\spf13\afero\mem
+  - mem
 - name: github.com/spf13/cast
   version: d1139bab1c07d5ad390a65e7305876b3c1a8370b
-  subpackages:
-  - github.com\spf13\cast
 - name: github.com/spf13/cobra
   version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
-  subpackages:
-  - github.com\spf13\cobra
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
-  subpackages:
-  - github.com\spf13\jwalterweatherman
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
-  subpackages:
-  - github.com\spf13\pflag
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
-  subpackages:
-  - github.com\spf13\viper
 - name: golang.org/x/crypto
   version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
   subpackages:
-  - golang.org\x\crypto\ssh
-  - golang.org\x\crypto\curve25519
-  - golang.org\x\crypto\ed25519
-  - golang.org\x\crypto\ed25519\internal\edwards25519
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
+  - ssh
 - name: golang.org/x/net
   version: f315505cf3349909cdf013ea56690da34e96a451
   subpackages:
   - context
-  - golang.org\x\net\context
 - name: golang.org/x/oauth2
   version: 3c3a985cb79f52a3190fbc056984415ca6763d01
   subpackages:
   - github
-  - golang.org\x\oauth2
-  - golang.org\x\oauth2\github
-  - golang.org\x\oauth2\internal
+  - internal
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
-  - golang.org\x\sys\unix
+  - unix
 - name: golang.org/x/text
   version: ece019dcfd29abcf65d0d1dfe145e8faad097640
   subpackages:
-  - golang.org\x\text\transform
-  - golang.org\x\text\unicode\norm
+  - transform
+  - unicode/norm
 - name: google.golang.org/appengine
   version: 596d349602aa23355ff46ade49ebfeb99c0fc550
   subpackages:
-  - google.golang.org\appengine\urlfetch
-  - google.golang.org\appengine\internal
-  - google.golang.org\appengine\internal\urlfetch
-  - google.golang.org\appengine\internal\base
-  - google.golang.org\appengine\internal\datastore
-  - google.golang.org\appengine\internal\log
-  - google.golang.org\appengine\internal\remote_api
+  - internal
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
 - name: gopkg.in/go-playground/validator.v8
   version: c193cecd124b5cc722d7ee5538e945bdb3348435
-  subpackages:
-  - gopkg.in\go-playground\validator.v8
 - name: gopkg.in/sourcegraph/go-vcsurl.v1
   version: 6b12603ea6fd7f84b8c90118face09df39ea10c6
-  subpackages:
-  - gopkg.in\sourcegraph\go-vcsurl.v1
 - name: gopkg.in/src-d/go-git.v3
-  version: bb4a55d739ce1e75596f26ae2b21949e71af79aa
+  version: 02c228585e543413479ea36d3a2bbc80a070eb93
   subpackages:
-  - gopkg.in\src-d\go-git.v3
-  - gopkg.in\src-d\go-git.v3\clients
-  - gopkg.in\src-d\go-git.v3\clients\common
-  - gopkg.in\src-d\go-git.v3\core
-  - gopkg.in\src-d\go-git.v3\diff
-  - gopkg.in\src-d\go-git.v3\formats\packfile
-  - gopkg.in\src-d\go-git.v3\storage\memory
-  - gopkg.in\src-d\go-git.v3\storage\seekable
-  - gopkg.in\src-d\go-git.v3\utils\fs
-  - gopkg.in\src-d\go-git.v3\clients\http
-  - gopkg.in\src-d\go-git.v3\clients\ssh
-  - gopkg.in\src-d\go-git.v3\formats\pktline
-  - gopkg.in\src-d\go-git.v3\storage\seekable\internal\gitdir
-  - gopkg.in\src-d\go-git.v3\storage\seekable\internal\index
-  - gopkg.in\src-d\go-git.v3\formats\idxfile
+  - clients
+  - clients/common
+  - clients/http
+  - clients/ssh
+  - core
+  - diff
+  - formats/idxfile
+  - formats/packfile
+  - formats/pktline
+  - storage/memory
+  - storage/seekable
+  - storage/seekable/internal/gitdir
+  - storage/seekable/internal/index
+  - utils/fs
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
-  subpackages:
-  - gopkg.in\yaml.v2
-devImports: []
+testImports:
+- name: gopkg.in/check.v1
+  version: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec

@@ -16,3 +16,5 @@ import:
 - package: github.com/dgrijalva/jwt-go
 - package: github.com/spf13/viper
 - package: github.com/spf13/cobra
+testImport:
+- package: gopkg.in/check.v1
