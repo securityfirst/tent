@@ -56,7 +56,12 @@ func NewEngine(conf Config, root *gin.RouterGroup) *Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
-		user.Name, user.Email, user.Login = *u.Name, *u.Email, *u.Login
+		user.Name, user.Login = *u.Name, *u.Login
+		if u.Email != nil {
+			user.Email = *u.Email
+		} else {
+			user.Email = user.Login + "@tent.org"
+		}
 		tokenString, err := e.encrypt(&user)
 		if err != nil {
 			log.Printf("Cannot create Jwt token: %s", err)
