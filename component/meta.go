@@ -40,35 +40,41 @@ func setMeta(meta string, m meta) error {
 		return ErrContent
 	}
 	for i, p := range pointers {
-		v := metaRow.FindStringSubmatch(rows[i])[2]
-		switch pointer := p.(type) {
-		case *string:
-			*pointer = v
-		case *bool:
-			*pointer = v == "true"
-		case *int:
-			if v == "" {
-				break
-			}
-			n, err := strconv.Atoi(v)
-			if err != nil {
-				return ErrContent
-			}
-			*pointer = n
-		case *float64:
-			n, err := strconv.ParseFloat(v, 64)
-			if err != nil {
-				return ErrContent
-			}
-			*pointer = n
-		case *[]string:
-			if strings.TrimSpace(v) == "" {
-				break
-			}
-			*pointer = strings.Split(v, "|")
-		default:
-			panic(fmt.Sprintf("Unknown type: %T", pointer))
+		if err := setMetaValue(p, metaRow.FindStringSubmatch(rows[i])[2]); err != nil {
+			return fmt.Errorf("meta: %s", err.Error())
 		}
+	}
+	return nil
+}
+
+func setMetaValue(p interface{}, v string) error {
+	switch pointer := p.(type) {
+	case *string:
+		*pointer = v
+	case *bool:
+		*pointer = v == "true"
+	case *int:
+		if v == "" {
+			return nil
+		}
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return ErrContent
+		}
+		*pointer = n
+	case *float64:
+		n, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return ErrContent
+		}
+		*pointer = n
+	case *[]string:
+		if strings.TrimSpace(v) == "" {
+			return nil
+		}
+		*pointer = strings.Split(v, "|")
+	default:
+		return fmt.Errorf("unknown type %T", pointer)
 	}
 	return nil
 }

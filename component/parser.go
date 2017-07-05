@@ -13,6 +13,7 @@ type Parser struct {
 	index      map[[2]string]int
 	categories []*Category
 	assets     []*Asset
+	forms      []*Form
 }
 
 // Parse executes the parsing on a repo
@@ -95,6 +96,8 @@ func (p *Parser) parseFile(f *git.File) error {
 			sub.SetChecks(c)
 		case *Asset:
 			p.assets = append(p.assets, c)
+		case *Form:
+			p.forms = append(p.forms, c)
 		default:
 			return parseError{f.Name, "type", "Invalid Path"}
 		}
@@ -115,4 +118,8 @@ func (p *Parser) Categories() map[string][]*Category {
 
 func (p *Parser) Assets() []*Asset {
 	return p.assets
+}
+
+func (p *Parser) Forms() []*Form {
+	return p.forms
 }

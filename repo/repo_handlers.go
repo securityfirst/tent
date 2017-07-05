@@ -3,6 +3,7 @@ package repo
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -36,6 +37,14 @@ func (r *RepoHandler) err(c *gin.Context, status int, err error) {
 }
 
 func (r *RepoHandler) cmp(c *gin.Context) component.Component {
+	asset, ok := c.Get("asset")
+	if ok {
+		return asset.(*component.Asset)
+	}
+	form, ok := c.Get("form")
+	if ok {
+		return form.(*component.Form)
+	}
 	cat, ok := c.Get("cat")
 	if !ok {
 		return nil
@@ -59,6 +68,10 @@ func (r *RepoHandler) user(c *gin.Context) *models.User {
 
 func (r *RepoHandler) asset(c *gin.Context) *component.Asset {
 	return c.MustGet("asset").(*component.Asset)
+}
+
+func (r *RepoHandler) form(c *gin.Context) *component.Form {
+	return c.MustGet("form").(*component.Form)
 }
 
 func (r *RepoHandler) cat(c *gin.Context) *component.Category {
@@ -238,6 +251,27 @@ func (r *RepoHandler) ParseAsset(c *gin.Context) {
 	})
 }
 
+// SetForm loads the form using the url parameter
+func (r *RepoHandler) SetForm(c *gin.Context) {
+	form := r.repo.Form(c.Param("form"), r.locale(c))
+	if form == nil {
+		r.err(c, http.StatusNotFound, ErrNotFound)
+		return
+	}
+	fmt.Println(form)
+	c.Set("form", form)
+}
+
+func (r *RepoHandler) ParseForm(c *gin.Context) {
+	var form component.Form
+	if err := c.BindJSON(&form); err != nil {
+		r.err(c, http.StatusBadRequest, err)
+		return
+	}
+	form.Id, form.Locale = c.Param("form"), r.locale(c)
+	c.Set("form", &form)
+}
+
 func (r *RepoHandler) Info(c *gin.Context) {
 	u := r.user(c)
 	c.JSON(http.StatusOK, gin.H{
@@ -283,6 +317,10 @@ func (r *RepoHandler) Show(c *gin.Context) {
 		v := *t
 		v.Hash = hash
 		out = &v
+	case *component.Form:
+		v := *t
+		v.Hash = hash
+		out = &v
 	}
 	c.JSON(http.StatusOK, out)
 }
@@ -290,6 +328,7 @@ func (r *RepoHandler) Show(c *gin.Context) {
 func (r *RepoHandler) Create(c *gin.Context) {
 	if err := r.repo.Create(r.cmp(c), r.user(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
+		return
 	}
 	c.Writer.WriteHeader(http.StatusCreated)
 }

@@ -20,6 +20,7 @@ const (
 	pathItem        = "/api/repo/category/:cat/:sub/item/:item"
 	pathAsset       = "/api/repo/asset"
 	pathAssetId     = "/api/repo/asset/:asset"
+	pathForm        = "/api/repo/form/:form"
 	pathCheck       = "/api/repo/category/:cat/:sub/checks"
 )
 
@@ -84,6 +85,11 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 
 	authorized.GET(pathAssetId, h.SetAsset, h.AssetShow)
 	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
+
+	authorized.GET(pathForm, h.SetForm, h.Show)
+	authorized.PUT(pathForm, h.ParseForm, h.Update)
+	authorized.DELETE(pathForm, h.ParseForm, h.CanDelete, h.Delete)
+	authorized.POST(pathForm, h.ParseForm, h.IsNew, h.Create)
 
 	loop(o.repo.Pull, 10*time.Minute, hookCh)
 

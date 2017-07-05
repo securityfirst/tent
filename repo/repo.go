@@ -49,6 +49,7 @@ type Repo struct {
 	commit     *git.Commit
 	categories map[string][]*component.Category
 	assets     []*component.Asset
+	forms      []*component.Form
 }
 
 func (r *Repo) SetConf(c *oauth2.Config) { r.conf = c }
@@ -56,11 +57,27 @@ func (r *Repo) SetConf(c *oauth2.Config) { r.conf = c }
 func (r *Repo) Tree(locale string, html bool) interface{} {
 	r.RLock()
 	defer r.RUnlock()
-	var s = make([]interface{}, 0, len(r.categories))
+
+	var cats = make([]interface{}, 0, len(r.categories))
 	for _, i := range r.Categories(locale) {
-		s = append(s, r.Category(i, locale).Tree(html))
+		cats = append(cats, r.Category(i, locale).Tree(html))
 	}
-	return s
+
+	var ass = make([]string, len(r.assets))
+	for i := range r.assets {
+		ass[i] = r.assets[i].Id
+	}
+
+	var forms = make([]string, len(r.forms))
+	for i := range r.forms {
+		forms[i] = r.forms[i].Id
+	}
+
+	return map[string]interface{}{
+		"categories": cats,
+		"assets":     ass,
+		"forms":      forms,
+	}
 }
 
 func (r *Repo) client(u *models.User) *github.Client {
@@ -138,6 +155,7 @@ func (r *Repo) Pull() {
 	}
 	r.categories = parser.Categories()
 	r.assets = parser.Assets()
+	r.forms = parser.Forms()
 }
 
 func (r *Repo) file(c component.Component) (*git.File, error) {
@@ -164,6 +182,18 @@ func (r *Repo) Asset(id string) *component.Asset {
 	for _, a := range r.assets {
 		if a.Id == id {
 			return a
+		}
+	}
+	return nil
+}
+
+func (r *Repo) Form(id string, locale string) *component.Form {
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, f := range r.forms {
+		if f.Id == id && f.Locale == locale {
+			return f
 		}
 	}
 	return nil

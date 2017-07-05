@@ -12,7 +12,7 @@ type Form struct {
 	Name    string       `json:"name"`
 	Hash    string       `json:"hash"`
 	Locale  string       `json:"-"`
-	Screens []FormScreen `json:"screens"`
+	Screens []FormScreen `json:"screens,omitempty"`
 }
 
 func (f *Form) Resource() Resource {
@@ -97,7 +97,7 @@ func (f *Form) SetContents(contents string) error {
 
 type FormScreen struct {
 	Name  string      `json:"name"`
-	Items []FormInput `json:"items"`
+	Items []FormInput `json:"items,omitempty"`
 }
 
 func (f *FormScreen) order() []string { return []string{"Type", "Name"} }
@@ -108,10 +108,10 @@ type FormInput struct {
 	Type    string   `json:"type"`
 	Name    string   `json:"name"`
 	Label   string   `json:"label"`
-	Value   string   `json:"value"`
-	Options []string `json:"options"`
-	Hint    string   `json:"hint"`
-	Lines   int      `json:"lines"`
+	Value   []string `json:"value"`
+	Options []string `json:"options,omitempty"`
+	Hint    string   `json:"hint,omitempty"`
+	Lines   int      `json:"lines,omitempty"`
 }
 
 func (f *FormInput) order() []string {
