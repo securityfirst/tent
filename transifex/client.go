@@ -8,12 +8,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const KeyValueJson = "KEYVALUEJSON"
 
 type Client struct {
 	client  *http.Client
+	tick    *time.Ticker
 	Project Project
 }
 
@@ -165,6 +167,10 @@ func (c Client) DownloadTranslations(slug string) (map[string]string, error) {
 	return translations, nil
 }
 
+func (c *Client) RateLimit(t time.Duration, requests int) {
+	c.tick = time.NewTicker(t / time.Duration(requests))
+}
+
 func (c Client) getJson(url string, errMsg string) (interface{}, error) {
 	resp, err := c.execute("GET", url, nil)
 	if err != nil {
@@ -180,6 +186,9 @@ func (c Client) getJson(url string, errMsg string) (interface{}, error) {
 }
 
 func (c Client) execute(method string, url string, requestData io.Reader) (*http.Response, error) {
+	if c.tick != nil {
+		<-c.tick.C
+	}
 	request, err := http.NewRequest(method, url, requestData)
 	if err != nil {
 		return nil, err

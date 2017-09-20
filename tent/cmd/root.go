@@ -37,6 +37,7 @@ var config struct {
 		Username string
 		Password string
 	}
+	Root string
 	auth.Config
 }
 

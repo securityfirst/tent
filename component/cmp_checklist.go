@@ -14,7 +14,7 @@ type Checklist struct {
 }
 
 func (c *Checklist) Resource() Resource {
-	var content = make([]map[string]string, len(c.Checks))
+	var content = make([]map[string]string, 0, len(c.Checks))
 	for _, c := range c.Checks {
 		content = append(content, map[string]string{
 			"difficulty": c.Difficulty,
