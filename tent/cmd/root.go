@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/repo"
 	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,7 +31,7 @@ var cfgFile string
 var config struct {
 	Port   int
 	Github struct {
-		Handler, Project string
+		Handler, Project, Branch string
 	}
 	Transifex struct {
 		Project  transifex.Project
@@ -39,6 +40,10 @@ var config struct {
 	}
 	Root string
 	auth.Config
+}
+
+func newRepo() (*repo.Repo, error) {
+	return repo.New(config.Github.Handler, config.Github.Project, config.Github.Branch)
 }
 
 var RootCmd = &cobra.Command{

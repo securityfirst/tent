@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/securityfirst/tent/component"
 
-	"github.com/securityfirst/tent/repo"
 	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +32,7 @@ func init() {
 }
 
 func downloadRun(cmd *cobra.Command, args []string) {
-	r, err := repo.New(config.Github.Handler, config.Github.Project)
+	r, err := newRepo()
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}
@@ -95,20 +93,17 @@ func downloadRun(cmd *cobra.Command, args []string) {
 				log.Printf("%s: %s", resource.Slug, red(err))
 				continue
 			}
-
 			target, ok := translations[lang]
 			if !ok {
 				log.Printf("%s: %s not found", resource.Slug, lang)
 				continue
-			}
-			if err := ioutil.WriteFile(filepath.Join(config.Root, resource.Slug), []byte(target), 0666); err != nil {
-				log.Printf("%s (%s) %s", resource.Slug, lang, err)
 			}
 			var m []map[string]string
 			if err := json.NewDecoder(strings.NewReader(target)).Decode(&m); err != nil {
 				log.Printf("%s (%s) %s\n%s", resource.Slug, lang, err, target)
 				continue
 			}
+			resource.Content = m
 			if err := parser.Parse(cmp, &resource, lang[:2]); err != nil {
 				log.Printf("%s (%s) %s", resource.Slug, lang, err)
 				continue
@@ -132,7 +127,8 @@ func downloadRun(cmd *cobra.Command, args []string) {
 	}
 
 	log.Printf("\n\n***** Saving %d files *****\n\n", count)
-	for _, cats := range parser.Categories() {
+	for lang, cats := range parser.Categories() {
+		log.Printf("Language [%s]", lang)
 		for _, cat := range cats {
 			printCmp(cat)
 			for _, s := range cat.Subcategories() {

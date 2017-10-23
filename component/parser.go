@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	git "gopkg.in/src-d/go-git.v3"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 // Parser is an helper, creates a tree from the repo
@@ -17,7 +17,7 @@ type Parser struct {
 }
 
 // Parse executes the parsing on a repo
-func (p *Parser) Parse(t *git.Tree) error {
+func (p *Parser) Parse(t *object.Tree) error {
 	p.index = make(map[[2]string]int)
 	p.categories = make([]*Category, 0)
 	if err := p.parse(t, filterCat); err != nil {
@@ -36,7 +36,7 @@ func (p *Parser) Parse(t *git.Tree) error {
 	return nil
 }
 
-func (p *Parser) parse(t *git.Tree, fn func(name string) bool) error {
+func (p *Parser) parse(t *object.Tree, fn func(name string) bool) error {
 	for iter := t.Files(); ; {
 		f, err := iter.Next()
 		if err != nil {
@@ -55,7 +55,7 @@ func (p *Parser) parse(t *git.Tree, fn func(name string) bool) error {
 	return nil
 }
 
-func (p *Parser) parseFile(f *git.File) error {
+func (p *Parser) parseFile(f *object.File) error {
 	contents, err := f.Contents()
 	if err != nil {
 		return parseError{f.Name, "read", err}

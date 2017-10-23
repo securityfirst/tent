@@ -109,6 +109,9 @@ func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error 
 }
 
 func (r *ResourceParser) parseChecklist(c *Checklist, res *Resource, locale string) error {
+	for len(res.Content) > 0 && res.Content[0] == nil {
+		res.Content = res.Content[1:]
+	}
 	if l, e := len(res.Content), len(c.Checks); l != e {
 		return fmt.Errorf("%d checks, %s expected", l, e)
 	}

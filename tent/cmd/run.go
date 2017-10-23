@@ -22,7 +22,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/securityfirst/tent"
-	"github.com/securityfirst/tent/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +36,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		e := gin.Default()
-		r, err := repo.New(config.Github.Handler, config.Github.Project)
+		r, err := newRepo()
 		if err != nil {
 			log.Fatalf("Repo error: %s", err)
 		}

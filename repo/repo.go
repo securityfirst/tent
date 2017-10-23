@@ -7,7 +7,10 @@ import (
 	"log"
 	"sync"
 
-	git "gopkg.in/src-d/go-git.v3"
+	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/google/go-github/github"
 	"github.com/securityfirst/tent/component"
@@ -17,7 +20,7 @@ import (
 
 var (
 	ErrNotReady     = errors.New("Repository not ready")
-	ErrFileNotFound = git.ErrFileNotFound
+	ErrFileNotFound = object.ErrFileNotFound
 )
 
 const (
@@ -32,21 +35,25 @@ var commitMsg = map[int]string{
 	actionDelete: "Delete",
 }
 
-func New(owner, name string) (*Repo, error) {
-	r, err := git.NewRepository(repoAddress(owner, name), nil)
+func New(owner, name, branch string) (*Repo, error) {
+	address := repoAddress(owner, name)
+	log.Printf("Using %q", address)
+	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: address})
 	if err != nil {
 		return nil, err
 	}
-	return &Repo{repo: r, name: name, owner: owner}, nil
+
+	return &Repo{repo: r, name: name, owner: owner, branch: branch}, nil
 }
 
 type Repo struct {
 	sync.RWMutex
 	owner      string
 	name       string
+	branch     string
 	conf       *oauth2.Config
 	repo       *git.Repository
-	commit     *git.Commit
+	commit     *object.Commit
 	categories map[string][]*component.Category
 	assets     []*component.Asset
 	forms      []*component.Form
@@ -126,16 +133,19 @@ func (r *Repo) String() string {
 func (r *Repo) Pull() {
 	r.Lock()
 	defer r.Unlock()
-	if err := r.repo.PullDefault(); err != nil {
+
+	err := r.repo.Fetch(&git.FetchOptions{})
+	if err != nil && err != git.NoErrAlreadyUpToDate {
 		log.Println("Pull failed:", err)
 		return
 	}
-	hash, err := r.repo.Remotes[git.DefaultRemoteName].Head()
+	branch := plumbing.ReferenceName("refs/remotes/origin/" + r.branch)
+	hash, err := r.repo.Reference(branch, false)
 	if err != nil {
-		log.Println("Head failed:", err)
+		log.Printf("Reference %q failed:", branch, err)
 		return
 	}
-	if r.commit != nil && r.commit.Hash == hash {
+	if r.commit != nil && r.commit.Hash == hash.Hash() {
 		return
 	}
 	if r.commit != nil {
@@ -143,13 +153,18 @@ func (r *Repo) Pull() {
 	} else {
 		log.Println("Checkout with", hash)
 	}
-	r.commit, err = r.repo.Commit(hash)
+	r.commit, err = r.repo.CommitObject(hash.Hash())
 	if err != nil {
 		log.Println("Commit failed:", err)
 		return
 	}
 	var parser component.Parser
-	if err := parser.Parse(r.commit.Tree()); err != nil {
+	tree, err := r.commit.Tree()
+	if err != nil {
+		log.Println("Tree failed:", err)
+		return
+	}
+	if err := parser.Parse(tree); err != nil {
 		log.Println("Parsing failed:", err)
 		return
 	}
@@ -158,7 +173,7 @@ func (r *Repo) Pull() {
 	r.forms = parser.Forms()
 }
 
-func (r *Repo) file(c component.Component) (*git.File, error) {
+func (r *Repo) file(c component.Component) (*object.File, error) {
 	if r.commit == nil {
 		return nil, ErrNotReady
 	}

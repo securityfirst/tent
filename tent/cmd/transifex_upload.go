@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/securityfirst/tent/repo"
 	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +36,7 @@ func init() {
 }
 
 func uploadRun(cmd *cobra.Command, args []string) {
-	r, err := repo.New(config.Github.Handler, config.Github.Project)
+	r, err := newRepo()
 	if err != nil {
 		log.Fatalf("Repo error: %s", err)
 	}
