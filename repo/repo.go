@@ -42,7 +42,9 @@ func New(owner, name, branch string) (*Repo, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if branch == "" {
+		branch = "master"
+	}
 	return &Repo{repo: r, name: name, owner: owner, branch: branch}, nil
 }
 
