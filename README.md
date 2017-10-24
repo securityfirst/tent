@@ -39,6 +39,7 @@ Now you create a configuration file named `.tent.yaml` in your `$HOME` folder us
 Github:
   Handler: "awesomeorg"
   Project: "myawesomeproject"
+  Branch: "master"
 Config:
   Id: "YOUR_CLIENT_ID"
   Secret: "YOUR_CLIENT_SECRET"
@@ -63,4 +64,8 @@ Once everything is ready you can start the app using `tent.exe run`.
 
 # Sample Repo
 
-This a sample repo used by tent: https://github.com/securityfirst/tent-content
+This a sample repo used by tent in the [Umbrella App](https://play.google.com/store/apps/details?id=org.secfirst.umbrella): https://github.com/securityfirst/tent-content
+
+# New! Branches
+
+You can work on a specific branch of your content project, this is very usefull for testing purpose (i.e. a big update on content).
