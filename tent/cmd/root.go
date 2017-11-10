@@ -35,6 +35,7 @@ var config struct {
 	}
 	Transifex struct {
 		Project  transifex.Project
+		Language string
 		Username string
 		Password string
 	}

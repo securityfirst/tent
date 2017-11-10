@@ -95,6 +95,14 @@ func (r *Repo) client(u *models.User) *github.Client {
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
 
+func (r *Repo) Locale() []string {
+	var locale = make([]string, 0, len(r.categories))
+	for k := range r.categories {
+		locale = append(locale, k)
+	}
+	return locale
+}
+
 func (r *Repo) All(locale string) []component.Component {
 	var list []component.Component
 	for _, cat := range r.categories[locale] {
