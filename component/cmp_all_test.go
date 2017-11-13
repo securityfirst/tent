@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	. "gopkg.in/check.v1"
-	git "gopkg.in/src-d/go-git.v3"
+	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
 
 func TestAll(t *testing.T) {
@@ -16,16 +18,18 @@ var _ = Suite(&CmpSuite{})
 type CmpSuite struct{}
 
 func (*CmpSuite) TestParse(c *C) {
-	r, err := git.NewRepository(repoAddress("klaidliadon", "tent-content"), nil)
+	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: repoAddress("klaidliadon", "tent-content")})
 	c.Assert(err, IsNil)
-	err = r.PullDefault()
+	err = r.Fetch(&git.FetchOptions{})
+	c.Assert(err, Equals, git.NoErrAlreadyUpToDate)
+	hash, err := r.Reference(plumbing.ReferenceName("refs/heads/master"), false)
 	c.Assert(err, IsNil)
-	hash, err := r.Remotes[git.DefaultRemoteName].Head()
+	commit, err := r.CommitObject(hash.Hash())
 	c.Assert(err, IsNil)
-	commit, err := r.Commit(hash)
+	tree, err := commit.Tree()
 	c.Assert(err, IsNil)
 	var t Parser
-	err = t.Parse(commit.Tree())
+	err = t.Parse(tree)
 	c.Assert(err, IsNil)
 	c.Logf("%v Assets", len(t.Assets()))
 	for _, cat := range t.Categories()["en"] {
