@@ -8,6 +8,8 @@ import (
 	"github.com/russross/blackfriday"
 )
 
+const paragraphSep = "\n\n\n"
+
 type Item struct {
 	parent     *Subcategory
 	Id         string `json:"-"`
@@ -20,16 +22,13 @@ type Item struct {
 }
 
 func (i *Item) Resource() Resource {
-	return Resource{
-		Slug: i.parent.Resource().Slug + "_" + i.Id,
-		Content: []map[string]string{
-			map[string]string{
-				"title":      i.Title,
-				"body":       i.Body,
-				"difficulty": i.Difficulty,
-			},
-		},
+	parts := strings.Split(i.Body, paragraphSep)
+	content := make([]map[string]string, len(parts)+1)
+	content[0] = map[string]string{"title": i.Title, "difficulty": i.Difficulty}
+	for i := range parts {
+		content[i+1] = map[string]string{"body": parts[i]}
 	}
+	return Resource{Slug: i.parent.Resource().Slug + "_" + i.Id, Content: content}
 }
 
 func (i *Item) SetParent(s *Subcategory) {
