@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
@@ -37,7 +38,7 @@ func init() {
 
 func uploadRun(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
-		args = []string{"en"}
+		args = []string{config.Transifex.Language}
 	}
 	r, err := newRepo()
 	if err != nil {
@@ -60,6 +61,8 @@ func uploadRun(cmd *cobra.Command, args []string) {
 	}
 
 	client := transifex.NewClient(config.Transifex.Project, config.Transifex.Username, config.Transifex.Password)
+	client.RateLimit(time.Hour, config.Transifex.RequestPerHour)
+
 	resources, err := client.ListResources()
 	if err != nil {
 		log.Fatalf("Resource list: %s", err)

@@ -34,10 +34,11 @@ var config struct {
 		Handler, Project, Branch string
 	}
 	Transifex struct {
-		Project  transifex.Project
-		Language string
-		Username string
-		Password string
+		Project        transifex.Project
+		Language       string
+		Username       string
+		Password       string
+		RequestPerHour int
 	}
 	Root string
 	auth.Config
@@ -85,5 +86,11 @@ func initConfig() {
 	log.Println("Using config file:", viper.ConfigFileUsed())
 	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatal("Error:", err)
+	}
+	if config.Transifex.Language == "" {
+		config.Transifex.Language = "en"
+	}
+	if config.Transifex.RequestPerHour == 0 {
+		config.Transifex.RequestPerHour = 6000
 	}
 }

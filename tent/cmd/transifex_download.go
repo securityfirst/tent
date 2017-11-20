@@ -39,7 +39,7 @@ func downloadRun(cmd *cobra.Command, args []string) {
 	r.Pull()
 
 	client := transifex.NewClient(config.Transifex.Project, config.Transifex.Username, config.Transifex.Password)
-	client.RateLimit(time.Hour, 6000)
+	client.RateLimit(time.Hour, config.Transifex.RequestPerHour)
 
 	parser := component.NewResourceParser()
 
@@ -53,10 +53,7 @@ func downloadRun(cmd *cobra.Command, args []string) {
 
 	go func() {
 		defer func() { quit <- nil }()
-
-		const lang = "zh-Hant"
-
-		for _, cmp := range r.All("en") {
+		for _, cmp := range r.All(config.Transifex.Language) {
 			count++
 			var (
 				resource     = cmp.Resource()
@@ -85,6 +82,7 @@ func downloadRun(cmd *cobra.Command, args []string) {
 					log.Printf("%s: %s", resource.Slug, red(err))
 					continue
 				}
+				defer f.Close()
 				if err = json.NewDecoder(f).Decode(&translations); err != nil {
 					log.Printf("%s: %s", resource.Slug, red(err))
 					continue
@@ -93,25 +91,27 @@ func downloadRun(cmd *cobra.Command, args []string) {
 				log.Printf("%s: %s", resource.Slug, red(err))
 				continue
 			}
-			target, ok := translations[lang]
-			if !ok {
-				log.Printf("%s: %s not found", resource.Slug, lang)
-				continue
-			}
-			var m []map[string]string
-			if err := json.NewDecoder(strings.NewReader(target)).Decode(&m); err != nil {
-				log.Printf("%s (%s) %s\n%s", resource.Slug, lang, err, target)
-				continue
-			}
-			resource.Content = m
-			if err := parser.Parse(cmp, &resource, lang[:2]); err != nil {
-				log.Printf("%s (%s) %s", resource.Slug, lang, err)
-				continue
-			}
-			if target != translations["en"] {
-				log.Printf("%s %s - %s", green("translated"), lang, resource.Slug)
-			} else {
-				log.Printf("%s %s - %s", red("not translated"), lang, resource.Slug)
+			for _, t := range args {
+				target, ok := translations[t]
+				if !ok {
+					log.Printf("%s: %s not found", resource.Slug, t)
+					continue
+				}
+				var m []map[string]string
+				if err := json.NewDecoder(strings.NewReader(target)).Decode(&m); err != nil {
+					log.Printf("%s (%s) %s\n%s", resource.Slug, t, err, target)
+					continue
+				}
+				resource.Content = m
+				if err := parser.Parse(cmp, &resource, t[:2]); err != nil {
+					log.Printf("%s (%s) %s", resource.Slug, t, err)
+					continue
+				}
+				if target != translations["en"] {
+					log.Printf("%s %s - %s", green("translated"), t, resource.Slug)
+				} else {
+					log.Printf("%s %s - %s", red("not translated"), t, resource.Slug)
+				}
 			}
 		}
 	}()
