@@ -8,7 +8,7 @@ import (
 	"github.com/russross/blackfriday"
 )
 
-const paragraphSep = "\n\n\n"
+const paragraphSep = "\n\n"
 
 type Item struct {
 	parent     *Subcategory
