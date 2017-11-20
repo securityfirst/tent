@@ -89,7 +89,7 @@ func (r *ResourceParser) parseSubcategory(s *Subcategory, res *Resource, locale 
 }
 
 func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error {
-	if len(res.Content) < 2 {
+	if len(res.Content) == 0 {
 		return ErrContent
 	}
 	cat := r.get(i.parent.parent.Id, locale)
@@ -107,11 +107,19 @@ func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error 
 		Order:      i.Order,
 	}
 	r.buffer.Reset()
-	for _, v := range res.Content[1:] {
-		if r.buffer.Len() != 0 {
-			r.buffer.WriteString(paragraphSep)
+	// Old Version Compatibility
+	if res.Content[0]["body"] != "" {
+		if len(res.Content) != 1 {
+			return fmt.Errorf("Invalid Legacy %q (%s)", i.parent.Id, locale)
 		}
-		r.buffer.WriteString(strings.TrimSpace(v["body"]))
+		r.buffer.WriteString(strings.TrimSpace(res.Content[0]["body"]))
+	} else {
+		for _, v := range res.Content[1:] {
+			if r.buffer.Len() != 0 {
+				r.buffer.WriteString(paragraphSep)
+			}
+			r.buffer.WriteString(strings.TrimSpace(v["body"]))
+		}
 	}
 	item.Body = r.buffer.String()
 	sub.AddItem(item)

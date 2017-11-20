@@ -24,7 +24,7 @@ func (CmpSuite) TestParseResource(c *C) {
 	err = p.Parse(&subCmp, &subRes, "it")
 	c.Assert(err, IsNil)
 
-	itemCmp := Item{Id: "item", Title: "Test item", Difficulty: "hard", parent: &subCmp, Body: "row1\n\n\nrow2\n\n\nrow3"}
+	itemCmp := Item{Id: "item", Title: "Test item", Difficulty: "hard", parent: &subCmp, Body: "row1\n\nrow2\n\nrow3"}
 	itemRes := Resource{
 		Slug: "cat___sub___item",
 		Content: []map[string]string{
@@ -36,15 +36,18 @@ func (CmpSuite) TestParseResource(c *C) {
 	}
 	err = p.Parse(&itemCmp, &itemRes, "it")
 	c.Assert(err, IsNil)
-	for _, cat := range p.Categories()["it"] {
-		c.Log(cat)
-		for _, s := range cat.Subcategories() {
-			sub := cat.Sub(s)
-			c.Log(sub)
-			for _, item := range sub.Items() {
-				c.Log(item)
 
-			}
-		}
+	legacyCmp := Item{Id: "item-legacy", Title: "Old Test item", Difficulty: "hard", parent: &subCmp, Body: "row1\n\nrow2\n\nrow3"}
+	legacyRes := Resource{
+		Slug: "cat___sub___item-legacy",
+		Content: []map[string]string{
+			map[string]string{"title": "item di prova legacy", "difficulty": "difficile", "body": "riga1\n\nriga2\n\nriga3"},
+		},
 	}
+	err = p.Parse(&legacyCmp, &legacyRes, "it")
+	c.Assert(err, IsNil)
+
+	legacyRes.Content = append(legacyRes.Content, map[string]string{"body": "moar"})
+	err = p.Parse(&legacyCmp, &legacyRes, "it")
+	c.Assert(err, NotNil)
 }
