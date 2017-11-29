@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -47,6 +49,8 @@ func downloadRun(cmd *cobra.Command, args []string) {
 	signal.Notify(quit, os.Interrupt)
 
 	var count int
+
+	pause := bufio.NewReader(os.Stdin)
 
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
@@ -98,8 +102,12 @@ func downloadRun(cmd *cobra.Command, args []string) {
 					continue
 				}
 				var m []map[string]string
-				if err := json.NewDecoder(strings.NewReader(target)).Decode(&m); err != nil {
+
+				if err := json.NewDecoder(strings.NewReader(cleanInput(target))).Decode(&m); err != nil {
 					log.Printf("%s (%s) %s\n%s", resource.Slug, t, err, target)
+					if config.PauseOnError {
+						pause.ReadBytes('\n')
+					}
 					continue
 				}
 				resource.Content = m
@@ -144,4 +152,15 @@ func downloadRun(cmd *cobra.Command, args []string) {
 		}
 	}
 
+}
+
+var (
+	unescapedNewlines = regexp.MustCompile(`"body":"(\\"|[^"])*\n(\\"|[^"])*"`)
+)
+
+func cleanInput(s string) string {
+	s = unescapedNewlines.ReplaceAllStringFunc(s, func(v string) string {
+		return strings.Replace(v, "\n", "\\n", -1)
+	})
+	return s
 }

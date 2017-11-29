@@ -40,7 +40,8 @@ var config struct {
 		Password       string
 		RequestPerHour int
 	}
-	Root string
+	PauseOnError bool
+	Root         string
 	auth.Config
 }
 
