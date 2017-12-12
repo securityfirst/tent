@@ -13,7 +13,6 @@ type Subcategory struct {
 	Hash         string  `json:"hash"`
 	Order        float64 `json:"-"`
 	difficulties []*Difficulty
-	checklist    *Checklist
 }
 
 func (s *Subcategory) Resource() Resource {
@@ -37,7 +36,6 @@ func (s *Subcategory) Tree(html bool) interface{} {
 	return map[string]interface{}{
 		"name":         s.Name,
 		"difficulties": difficulties,
-		"checks":       s.checklist.Checks,
 	}
 }
 
@@ -53,7 +51,6 @@ func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
 		"name":         s.Name,
 		"difficulties": s.DifficultyNames(),
-		"checks":       s.checklist.Checks,
 	}
 	if s.Hash != "" {
 		m["hash"] = s.Hash
@@ -125,9 +122,6 @@ func (s *Subcategory) Contents() string { return getMeta(s) }
 func (s *Subcategory) SetContents(contents string) error {
 	if err := checkMeta(contents, s); err != nil {
 		return err
-	}
-	if s.checklist == nil {
-		s.checklist = new(Checklist)
 	}
 	return setMeta(contents, s)
 }
