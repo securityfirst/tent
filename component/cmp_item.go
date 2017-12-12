@@ -11,28 +11,27 @@ import (
 const paragraphSep = "\n\n"
 
 type Item struct {
-	parent     *Subcategory
-	Id         string `json:"-"`
-	Hash       string `json:"hash,omitempty"`
-	Difficulty string `json:"difficulty"`
-	Title      string `json:"title"`
-	Body       string `json:"body"`
-	htmlBody   string
-	Order      float64 `json:"-"`
+	parent   *Difficulty
+	ID       string `json:"-"`
+	Hash     string `json:"hash,omitempty"`
+	Title    string `json:"title"`
+	Body     string `json:"body"`
+	htmlBody string
+	Order    float64 `json:"-"`
 }
 
 func (i *Item) Resource() Resource {
 	parts := strings.Split(i.Body, paragraphSep)
 	content := make([]map[string]string, len(parts)+1)
-	content[0] = map[string]string{"title": i.Title, "difficulty": i.Difficulty}
+	content[0] = map[string]string{"title": i.Title}
 	for i := range parts {
 		content[i+1] = map[string]string{"body": parts[i]}
 	}
-	return Resource{Slug: i.parent.Resource().Slug + "_" + i.Id, Content: content}
+	return Resource{Slug: i.parent.Resource().Slug + "_" + i.ID, Content: content}
 }
 
-func (i *Item) SetParent(s *Subcategory) {
-	i.parent = s
+func (i *Item) SetParent(d *Difficulty) {
+	i.parent = d
 }
 
 func (i *Item) HasChildren() bool {
@@ -44,23 +43,23 @@ func (i *Item) SHA() string {
 }
 
 func (i *Item) Path() string {
-	return fmt.Sprintf("%s/%s%s", i.parent.basePath(), i.Id, fileExt)
+	return fmt.Sprintf("%s/%s%s", i.parent.basePath(), i.ID, fileExt)
 }
 
-var itemPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/([^/]+).md")
+var itemPath = regexp.MustCompile("contents(?:_[a-z]{2})?/[^/]+/[^/]+/[^/]+/([^/]+).md")
 
 func (i *Item) SetPath(filepath string) error {
 	p := itemPath.FindStringSubmatch(filepath)
 	if len(p) == 0 || p[1] == suffixMeta {
 		return ErrContent
 	}
-	i.Id = p[1]
+	i.ID = p[1]
 	return nil
 }
 
-func (i *Item) order() []string { return []string{"Title", "Difficulty", "Order"} }
-func (i *Item) pointers() args  { return args{&i.Title, &i.Difficulty, &i.Order} }
-func (i *Item) values() args    { return args{i.Title, i.Difficulty, i.Order} }
+func (i *Item) order() []string { return []string{"Title", "Order"} }
+func (i *Item) pointers() args  { return args{&i.Title, &i.Order} }
+func (i *Item) values() args    { return args{i.Title, i.Order} }
 
 func (i *Item) Contents() string {
 	return fmt.Sprint(getMeta(i), bodySeparator, i.Body)

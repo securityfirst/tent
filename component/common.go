@@ -50,31 +50,34 @@ type Resource struct {
 func newCmp(path string) (Component, error) {
 	p := strings.Split(path, "/")
 	switch l := len(p); l {
-	case 3:
+	case 2:
 		if formPath.MatchString(path) {
 			return new(Form), nil
 		}
-		if p[1] == "assets" && isImage(p[2]) {
+		if p[0] == "assets" && isImage(p[1]) {
 			return new(Asset), nil
 		}
-		return nil, ErrContent
-	case 4:
-		return new(Category), nil
-	case 5:
-		if !IsMd(p[4]) {
-			return nil, ErrContent
+	case 3:
+		if strings.TrimSuffix(p[2], fileExt) == suffixMeta {
+			return new(Category), nil
 		}
-		switch p[4][:len(p[4])-len(fileExt)] {
-		case suffixMeta:
+	case 4:
+		if strings.TrimSuffix(p[3], fileExt) == suffixMeta {
 			return new(Subcategory), nil
+		}
+	case 5:
+		switch strings.TrimSuffix(p[4], fileExt) {
+		case suffixMeta:
+			return new(Difficulty), nil
 		case suffixChecks:
 			return new(Checklist), nil
 		default:
-			return new(Item), nil
+			if isMd(p[4]) {
+				return new(Item), nil
+			}
 		}
-	default:
-		return nil, ErrContent
 	}
+	return nil, ErrContent
 }
 
 func filterCat(name string) bool {
@@ -88,7 +91,7 @@ func filterRes(name string) bool {
 	return !strings.HasSuffix(name, suffixMeta+fileExt)
 }
 
-func IsMd(name string) bool { return filepath.Ext(name) == fileExt }
+func isMd(name string) bool { return filepath.Ext(name) == fileExt }
 
 func isImage(name string) bool {
 	ext := filepath.Ext(name)

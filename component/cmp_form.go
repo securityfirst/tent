@@ -8,7 +8,7 @@ import (
 )
 
 type Form struct {
-	Id      string       `json:"-"`
+	ID      string       `json:"-"`
 	Name    string       `json:"name"`
 	Hash    string       `json:"hash"`
 	Locale  string       `json:"-"`
@@ -17,7 +17,7 @@ type Form struct {
 
 func (f *Form) Resource() Resource {
 	return Resource{
-		Slug: f.Id,
+		Slug: f.ID,
 		Content: []map[string]string{
 			map[string]string{"name": f.Name},
 		},
@@ -33,10 +33,10 @@ func (f *Form) Path() string {
 	if f.Locale != "" {
 		loc = "_" + f.Locale
 	}
-	return fmt.Sprintf("/forms%s/%s%s", loc, f.Id, fileExt)
+	return fmt.Sprintf("forms%s/%s%s", loc, f.ID, fileExt)
 }
 
-var formPath = regexp.MustCompile("/forms_([a-z]{2})/([^/]+).md")
+var formPath = regexp.MustCompile("forms_([a-z]{2})/([^/]+).md")
 
 func (f *Form) SetPath(filepath string) error {
 	p := formPath.FindStringSubmatch(filepath)
@@ -44,7 +44,7 @@ func (f *Form) SetPath(filepath string) error {
 		return ErrContent
 	}
 	f.Locale = p[1]
-	f.Id = p[2]
+	f.ID = p[2]
 	return nil
 }
 

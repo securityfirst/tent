@@ -7,7 +7,7 @@ import (
 )
 
 type Category struct {
-	Id            string  `json:"-"`
+	ID            string  `json:"-"`
 	Name          string  `json:"name"`
 	Hash          string  `json:"hash"`
 	Locale        string  `json:"-"`
@@ -17,7 +17,7 @@ type Category struct {
 
 func (c *Category) Resource() Resource {
 	return Resource{
-		Slug: c.Id,
+		Slug: c.ID,
 		Content: []map[string]string{
 			map[string]string{"name": c.Name},
 		},
@@ -54,9 +54,9 @@ func (c *Category) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (c *Category) Sub(id string) *Subcategory {
+func (c *Category) Sub(ID string) *Subcategory {
 	for _, v := range c.subcategories {
-		if v.Id == id {
+		if v.ID == ID {
 			return v
 		}
 	}
@@ -66,7 +66,7 @@ func (c *Category) Sub(id string) *Subcategory {
 func (c *Category) Subcategories() []string {
 	var r = make([]string, 0, len(c.subcategories))
 	for _, v := range c.subcategories {
-		r = append(r, v.Id)
+		r = append(r, v.ID)
 	}
 	return r
 }
@@ -83,14 +83,14 @@ func (c *Category) basePath() string {
 	if c.Locale != "" {
 		loc = "_" + c.Locale
 	}
-	return fmt.Sprintf("/contents%s/%s", loc, c.Id)
+	return fmt.Sprintf("contents%s/%s", loc, c.ID)
 }
 
 func (c *Category) Path() string {
 	return fmt.Sprintf("%s/%s%s", c.basePath(), suffixMeta, fileExt)
 }
 
-var catPath = regexp.MustCompile("/contents_([a-z]{2})/([^/]+)/.metadata.md")
+var catPath = regexp.MustCompile("contents_([a-z]{2})/([^/]+)/.metadata.md")
 
 func (c *Category) SetPath(filepath string) error {
 	p := catPath.FindStringSubmatch(filepath)
@@ -98,7 +98,7 @@ func (c *Category) SetPath(filepath string) error {
 		return ErrContent
 	}
 	c.Locale = p[1]
-	c.Id = p[2]
+	c.ID = p[2]
 	return nil
 }
 

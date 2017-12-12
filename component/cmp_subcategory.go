@@ -7,18 +7,18 @@ import (
 )
 
 type Subcategory struct {
-	parent    *Category
-	Id        string  `json:"-"`
-	Name      string  `json:"name"`
-	Hash      string  `json:"hash"`
-	Order     float64 `json:"-"`
-	items     []*Item
-	checklist *Checklist
+	parent       *Category
+	ID           string  `json:"-"`
+	Name         string  `json:"name"`
+	Hash         string  `json:"hash"`
+	Order        float64 `json:"-"`
+	difficulties []*Difficulty
+	checklist    *Checklist
 }
 
 func (s *Subcategory) Resource() Resource {
 	return Resource{
-		Slug: s.parent.Resource().Slug + "_" + s.Id,
+		Slug: s.parent.Resource().Slug + "_" + s.ID,
 		Content: []map[string]string{
 			map[string]string{"name": s.Name},
 		},
@@ -26,21 +26,18 @@ func (s *Subcategory) Resource() Resource {
 }
 
 func (s *Subcategory) HasChildren() bool {
-	return len(s.items) != 0
+	return len(s.difficulties) != 0
 }
 
 func (s *Subcategory) Tree(html bool) interface{} {
-	var items = make([]Item, len(s.items))
-	for i, v := range s.items {
-		items[i] = *v
-		if html {
-			items[i].Body = items[i].htmlBody
-		}
+	var difficulties = make([]interface{}, len(s.difficulties))
+	for i, v := range s.difficulties {
+		difficulties[i] = v.Tree(html)
 	}
 	return map[string]interface{}{
-		"name":   s.Name,
-		"items":  items,
-		"checks": s.checklist.Checks,
+		"name":         s.Name,
+		"difficulties": difficulties,
+		"checks":       s.checklist.Checks,
 	}
 }
 
@@ -54,9 +51,9 @@ func (s *Subcategory) SetParent(c *Category) {
 
 func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
-		"name":   s.Name,
-		"items":  s.ItemNames(),
-		"checks": s.checklist.Checks,
+		"name":         s.Name,
+		"difficulties": s.DifficultyNames(),
+		"checks":       s.checklist.Checks,
 	}
 	if s.Hash != "" {
 		m["hash"] = s.Hash
@@ -64,64 +61,36 @@ func (s *Subcategory) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (s *Subcategory) Items() []Item {
-	var dst = make([]Item, len(s.items))
-	for i, v := range s.items {
+func (s *Subcategory) Difficulties() []Difficulty {
+	var dst = make([]Difficulty, len(s.difficulties))
+	for i, v := range s.difficulties {
 		dst[i] = *v
 	}
 	return dst
 }
 
-func (s *Subcategory) ItemNames() []string {
-	var r = make([]string, 0, len(s.items))
-	for i := range s.items {
-		r = append(r, s.items[i].Id)
+func (s *Subcategory) DifficultyNames() []string {
+	var r = make([]string, 0, len(s.difficulties))
+	for i := range s.difficulties {
+		r = append(r, s.difficulties[i].ID)
 	}
 	return r
 }
 
-func (s *Subcategory) Checks() *Checklist {
-	var dst []Check
-	if s.checklist == nil {
-		s.SetChecks(new(Checklist))
-	}
-	dst = make([]Check, len(s.checklist.Checks))
-	for i, v := range s.checklist.Checks {
-		dst[i] = v
-	}
-	return &Checklist{
-		parent: s,
-		Hash:   s.checklist.Hash,
-		Checks: dst,
-	}
-}
-
-func (s *Subcategory) AddChecks(c ...Check) {
-	if s.checklist == nil {
-		s.SetChecks(new(Checklist))
-	}
-	s.checklist.Add(c...)
-}
-
-func (s *Subcategory) SetChecks(c *Checklist) {
-	s.checklist = c
-	c.parent = s
-}
-
-func (s *Subcategory) AddItem(items ...*Item) error {
-	for _, v := range items {
-		if s.Item(v.Id) != nil {
-			return fmt.Errorf("item %s exists in %s/%s", v.Id, s.parent.Id, s.Id)
+func (s *Subcategory) AddDifficulty(difficulties ...*Difficulty) error {
+	for _, v := range difficulties {
+		if s.Difficulty(v.ID) != nil {
+			return fmt.Errorf("Difficulty %s exists in %s/%s", v.ID, s.parent.ID, s.ID)
 		}
 		v.parent = s
 	}
-	s.items = append(s.items, items...)
+	s.difficulties = append(s.difficulties, difficulties...)
 	return nil
 }
 
-func (s *Subcategory) Item(id string) *Item {
-	for _, v := range s.items {
-		if v.Id == id {
+func (s *Subcategory) Difficulty(ID string) *Difficulty {
+	for _, v := range s.difficulties {
+		if v.ID == ID {
 			return v
 		}
 	}
@@ -129,21 +98,21 @@ func (s *Subcategory) Item(id string) *Item {
 }
 
 func (s *Subcategory) basePath() string {
-	return fmt.Sprintf("%s/%s", s.parent.basePath(), s.Id)
+	return fmt.Sprintf("%s/%s", s.parent.basePath(), s.ID)
 }
 
 func (s *Subcategory) Path() string {
 	return fmt.Sprintf("%s/.metadata%s", s.basePath(), fileExt)
 }
 
-var subPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/([^/]+)/.metadata.md")
+var subPath = regexp.MustCompile("contents(?:_[a-z]{2})?/[^/]+/([^/]+)/.metadata.md")
 
 func (s *Subcategory) SetPath(filepath string) error {
 	p := subPath.FindStringSubmatch(filepath)
 	if len(p) == 0 {
 		return ErrContent
 	}
-	s.Id = p[1]
+	s.ID = p[1]
 	return nil
 }
 

@@ -18,7 +18,7 @@ var _ = Suite(&CmpSuite{})
 type CmpSuite struct{}
 
 func (*CmpSuite) TestParse(c *C) {
-	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: repoAddress("klaidliadon", "tent-content")})
+	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: repoAddress("securityfirst", "tent-example")})
 	c.Assert(err, IsNil)
 	err = r.Fetch(&git.FetchOptions{})
 	c.Assert(err, Equals, git.NoErrAlreadyUpToDate)
@@ -35,7 +35,9 @@ func (*CmpSuite) TestParse(c *C) {
 	for _, cat := range t.Categories()["en"] {
 		c.Log(cat.Name)
 		for _, sub := range cat.subcategories {
-			c.Logf("\t%q, items:%v checks:%v", sub.Name, len(sub.items), len(sub.checklist.Checks))
+			for _, dif := range sub.difficulties {
+				c.Logf("\t%q %q, items:%v checks:%v", sub.Name, dif.Name, len(dif.items), len(dif.checklist.Checks))
+			}
 		}
 	}
 }
@@ -43,7 +45,7 @@ func (*CmpSuite) TestParse(c *C) {
 func (CmpSuite) TestForm(c *C) {
 	var f Form
 
-	path := `/forms_en/formid.md`
+	path := `forms_en/formid.md`
 	contents := `[Name]: # (Form Name)
 
 [Type]: # (screen)
