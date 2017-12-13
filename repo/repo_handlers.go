@@ -3,7 +3,6 @@ package repo
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -82,6 +81,10 @@ func (r *RepoHandler) sub(c *gin.Context) *component.Subcategory {
 	return c.MustGet("sub").(*component.Subcategory)
 }
 
+func (r *RepoHandler) diff(c *gin.Context) *component.Difficulty {
+	return c.MustGet("diff").(*component.Difficulty)
+}
+
 func (r *RepoHandler) item(c *gin.Context) *component.Item {
 	return c.MustGet("item").(*component.Item)
 }
@@ -110,15 +113,19 @@ func (r *RepoHandler) IsNew(c *gin.Context) {
 	var cmp component.Component
 	switch t := r.cmp(c).(type) {
 	case *component.Category:
-		if cat := r.repo.Category(t.Id, r.locale(c)); cat != nil {
+		if cat := r.repo.Category(t.ID, r.locale(c)); cat != nil {
 			cmp = cat
 		}
 	case *component.Subcategory:
-		if sub := r.cat(c).Sub(t.Id); sub != nil {
+		if sub := r.cat(c).Sub(t.ID); sub != nil {
 			cmp = sub
 		}
+	case *component.Difficulty:
+		if item := r.sub(c).Difficulty(t.ID); item != nil {
+			cmp = item
+		}
 	case *component.Item:
-		if item := r.sub(c).Item(t.Id); item != nil {
+		if item := r.diff(c).Item(t.ID); item != nil {
 			cmp = item
 		}
 	}
@@ -131,15 +138,19 @@ func (r *RepoHandler) CanDelete(c *gin.Context) {
 	var cmp component.Component
 	switch t := r.cmp(c).(type) {
 	case *component.Category:
-		if cat := r.repo.Category(t.Id, r.locale(c)); cat != nil {
+		if cat := r.repo.Category(t.ID, r.locale(c)); cat != nil {
 			cmp = cat
 		}
 	case *component.Subcategory:
-		if sub := r.cat(c).Sub(t.Id); sub != nil {
+		if sub := r.cat(c).Sub(t.ID); sub != nil {
 			cmp = sub
 		}
+	case *component.Difficulty:
+		if diff := r.sub(c).Difficulty(t.ID); diff != nil {
+			cmp = diff
+		}
 	case *component.Item:
-		if item := r.sub(c).Item(t.Id); item != nil {
+		if item := r.diff(c).Item(t.ID); item != nil {
 			cmp = item
 		}
 	}
@@ -169,7 +180,7 @@ func (r *RepoHandler) ParseCat(c *gin.Context) {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	cat.Id, cat.Locale = c.Param("cat"), r.locale(c)
+	cat.ID, cat.Locale = c.Param("cat"), r.locale(c)
 	c.Set("cat", &cat)
 }
 
@@ -191,14 +202,36 @@ func (r *RepoHandler) ParseSub(c *gin.Context) {
 		return
 	}
 	sub.SetParent(r.cat(c))
-	sub.Id = c.Param("sub")
+	sub.ID = c.Param("sub")
 	log.Println(sub)
 	c.Set("sub", &sub)
 }
 
-func (r *RepoHandler) SetItem(c *gin.Context) {
+func (r *RepoHandler) SetDiff(c *gin.Context) {
 	r.SetSub(c)
-	item := r.sub(c).Item(c.Param("item"))
+	diff := r.sub(c).Difficulty(c.Param("diff"))
+	if diff == nil {
+		r.err(c, http.StatusNotFound, ErrNotFound)
+		return
+	}
+	c.Set("diff", diff)
+}
+
+func (r *RepoHandler) ParseDiff(c *gin.Context) {
+	r.SetSub(c)
+	var diff component.Difficulty
+	if err := c.BindJSON(&diff); err != nil {
+		r.err(c, http.StatusBadRequest, err)
+		return
+	}
+	diff.SetParent(r.sub(c))
+	diff.ID = c.Param("diff")
+	c.Set("diff", &diff)
+}
+
+func (r *RepoHandler) SetItem(c *gin.Context) {
+	r.SetDiff(c)
+	item := r.diff(c).Item(c.Param("item"))
 	if item == nil {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
@@ -207,20 +240,20 @@ func (r *RepoHandler) SetItem(c *gin.Context) {
 }
 
 func (r *RepoHandler) ParseItem(c *gin.Context) {
-	r.SetSub(c)
+	r.SetDiff(c)
 	var item component.Item
 	if err := c.BindJSON(&item); err != nil {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	item.SetParent(r.sub(c))
-	item.Id = c.Param("item")
+	item.SetParent(r.diff(c))
+	item.ID = c.Param("item")
 	c.Set("item", &item)
 }
 
 func (r *RepoHandler) SetCheck(c *gin.Context) {
 	r.SetSub(c)
-	c.Set("checks", r.sub(c).Checks())
+	c.Set("checks", r.diff(c).Checks())
 }
 
 func (r *RepoHandler) ParseCheck(c *gin.Context) {
@@ -230,7 +263,7 @@ func (r *RepoHandler) ParseCheck(c *gin.Context) {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	check.SetParent(r.sub(c))
+	check.SetParent(r.diff(c))
 	c.Set("checks", &check)
 }
 
@@ -246,7 +279,7 @@ func (r *RepoHandler) ParseAsset(c *gin.Context) {
 	b := bytes.NewBuffer(nil)
 	io.Copy(b, c.Request.Body)
 	c.Set("asset", &component.Asset{
-		Id:      RandStringBytesMaskImprSrc(10) + filepath.Ext(file),
+		ID:      RandStringBytesMaskImprSrc(10) + filepath.Ext(file),
 		Content: b.String(),
 	})
 }
@@ -258,7 +291,6 @@ func (r *RepoHandler) SetForm(c *gin.Context) {
 		r.err(c, http.StatusNotFound, ErrNotFound)
 		return
 	}
-	fmt.Println(form)
 	c.Set("form", form)
 }
 
@@ -268,7 +300,7 @@ func (r *RepoHandler) ParseForm(c *gin.Context) {
 		r.err(c, http.StatusBadRequest, err)
 		return
 	}
-	form.Id, form.Locale = c.Param("form"), r.locale(c)
+	form.ID, form.Locale = c.Param("form"), r.locale(c)
 	c.Set("form", &form)
 }
 
@@ -360,7 +392,7 @@ func (r *RepoHandler) AssetCreate(c *gin.Context) {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(201, gin.H{"id": asset.Id})
+	c.JSON(201, gin.H{"id": asset.ID})
 }
 
 func (r *RepoHandler) Tree(c *gin.Context) {

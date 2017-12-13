@@ -74,12 +74,12 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 
 	var ass = make([]string, len(r.assets))
 	for i := range r.assets {
-		ass[i] = r.assets[i].Id
+		ass[i] = r.assets[i].ID
 	}
 
 	var forms = make([]string, len(r.forms))
 	for i := range r.forms {
-		forms[i] = r.forms[i].Id
+		forms[i] = r.forms[i].ID
 	}
 
 	return map[string]interface{}{
@@ -110,11 +110,13 @@ func (r *Repo) All(locale string) []component.Component {
 		for _, id := range cat.Subcategories() {
 			sub := cat.Sub(id)
 			list = append(list, sub)
-			for _, id := range sub.ItemNames() {
-				list = append(list, sub.Item(id))
-			}
-			if check := sub.Checks(); check.HasChildren() {
-				list = append(list, check)
+			for _, diff := range sub.Difficulties() {
+				for _, id := range diff.ItemNames() {
+					list = append(list, diff.Item(id))
+				}
+				if check := diff.Checks(); check.HasChildren() {
+					list = append(list, check)
+				}
 			}
 		}
 	}
@@ -205,7 +207,7 @@ func (r *Repo) Asset(id string) *component.Asset {
 	defer r.RUnlock()
 
 	for _, a := range r.assets {
-		if a.Id == id {
+		if a.ID == id {
 			return a
 		}
 	}
@@ -217,7 +219,7 @@ func (r *Repo) Form(id string, locale string) *component.Form {
 	defer r.RUnlock()
 
 	for _, f := range r.forms {
-		if f.Id == id && f.Locale == locale {
+		if f.ID == id && f.Locale == locale {
 			return f
 		}
 	}
@@ -229,7 +231,7 @@ func (r *Repo) Category(cat, locale string) *component.Category {
 	defer r.RUnlock()
 
 	for _, c := range r.categories[locale] {
-		if c.Id == cat {
+		if c.ID == cat {
 			return c
 		}
 	}
@@ -241,7 +243,7 @@ func (r *Repo) Categories(locale string) []string {
 	defer r.RUnlock()
 	var s []string
 	for _, v := range r.categories[locale] {
-		s = append(s, v.Id)
+		s = append(s, v.ID)
 	}
 	return s
 }
