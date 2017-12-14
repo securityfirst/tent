@@ -9,7 +9,7 @@ import (
 type Difficulty struct {
 	parent    *Subcategory
 	ID        string `json:"id"`
-	Name      string `json:"name"`
+	Descr     string `json:"description"`
 	Hash      string `json:"hash"`
 	items     []*Item
 	checklist *Checklist
@@ -19,7 +19,7 @@ func (d *Difficulty) Resource() Resource {
 	return Resource{
 		Slug: d.parent.Resource().Slug + "_" + d.ID,
 		Content: []map[string]string{
-			map[string]string{"name": d.Name},
+			map[string]string{"description": d.Descr},
 		},
 	}
 }
@@ -37,10 +37,10 @@ func (d *Difficulty) Tree(html bool) interface{} {
 		}
 	}
 	return map[string]interface{}{
-		"id":     d.ID,
-		"name":   d.Name,
-		"items":  items,
-		"checks": d.checklist.Checks,
+		"id":          d.ID,
+		"description": d.Descr,
+		"items":       items,
+		"checks":      d.checklist.Checks,
 	}
 }
 
@@ -54,9 +54,9 @@ func (d *Difficulty) SetParent(s *Subcategory) {
 
 func (d *Difficulty) MarshalJSON() ([]byte, error) {
 	var m = map[string]interface{}{
-		"name":   d.Name,
-		"items":  d.ItemNames(),
-		"checks": d.checklist.Checks,
+		"description": d.Descr,
+		"items":       d.ItemNames(),
+		"checks":      d.checklist.Checks,
 	}
 	if d.Hash != "" {
 		m["hash"] = d.Hash
@@ -147,9 +147,9 @@ func (d *Difficulty) SetPath(filepath string) error {
 	return nil
 }
 
-func (d *Difficulty) order() []string { return []string{"Name"} }
-func (d *Difficulty) pointers() args  { return args{&d.Name} }
-func (d *Difficulty) values() args    { return args{d.Name} }
+func (d *Difficulty) order() []string { return []string{"Description"} }
+func (d *Difficulty) pointers() args  { return args{&d.Descr} }
+func (d *Difficulty) values() args    { return args{d.Descr} }
 
 func (d *Difficulty) Contents() string { return getMeta(d) }
 

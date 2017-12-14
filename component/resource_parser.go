@@ -103,8 +103,8 @@ func (r *ResourceParser) parseDifficulty(d *Difficulty, res *Resource, locale st
 		return fmt.Errorf("No sub %q (%s)", d.parent.ID, locale)
 	}
 	sub.AddDifficulty(&Difficulty{
-		ID:   d.ID,
-		Name: res.Content[0]["name"],
+		ID:    d.ID,
+		Descr: res.Content[0]["description"],
 	})
 	return nil
 }
