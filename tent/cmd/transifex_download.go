@@ -13,11 +13,11 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/securityfirst/tent/utils"
+	"gopkg.in/securityfirst/tent.v1/utils"
 
-	"github.com/securityfirst/tent/component"
+	"gopkg.in/securityfirst/tent.v1/component"
 
-	"github.com/securityfirst/tent/transifex"
+	"gopkg.in/securityfirst/tent.v1/transifex"
 	"github.com/spf13/cobra"
 )
 

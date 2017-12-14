@@ -26,9 +26,9 @@ this should be set as `https://YourAppPublicDomain/auth/callback`.
 
 ## Binary
 
-Download the latest version of the [binary](https://github.com/securityfirst/tent/releases/latest) or build it from source.
+Download the latest version of the [binary](https://gopkg.in/securityfirst/tent.v1/releases/latest) or build it from source.
 In order to do so install [latest version](https://golang.org/dl/) of Go 
-then execute `go get github.com/securityfirst/tent/tent`.
+then execute `go get gopkg.in/securityfirst/tent.v1/tent`.
 This will install it in your `$GOPATH` (that should be `~/go/bin`)
 
 ## Configuration
@@ -64,7 +64,7 @@ Once everything is ready you can start the app using `tent.exe run`.
 
 # Sample Repo
 
-This a sample repo used by tent in the [Umbrella App](https://play.google.com/store/apps/details?id=org.secfirst.umbrella): https://github.com/securityfirst/tent-content
+This a sample repo used by tent in the [Umbrella App](https://play.google.com/store/apps/details?id=org.secfirst.umbrella): https://gopkg.in/securityfirst/tent.v1-content
 
 # New! Branches
 

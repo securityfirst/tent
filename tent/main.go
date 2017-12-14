@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/securityfirst/tent/tent/cmd"
+import "gopkg.in/securityfirst/tent.v1/tent/cmd"
 
 func main() {
 	cmd.Execute()

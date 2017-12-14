@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
-	"github.com/securityfirst/tent/component"
-	"github.com/securityfirst/tent/models"
+	"gopkg.in/securityfirst/tent.v1/component"
+	"gopkg.in/securityfirst/tent.v1/models"
 )
 
 var (

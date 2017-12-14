@@ -21,7 +21,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/securityfirst/tent"
+	"gopkg.in/securityfirst/tent.v1"
 	"github.com/spf13/cobra"
 )
 

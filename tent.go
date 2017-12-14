@@ -6,8 +6,8 @@ import (
 
 	"github.com/cenkalti/log"
 	"github.com/gin-gonic/gin"
-	"github.com/securityfirst/tent/auth"
-	"github.com/securityfirst/tent/repo"
+	"gopkg.in/securityfirst/tent.v1/auth"
+	"gopkg.in/securityfirst/tent.v1/repo"
 )
 
 const (
