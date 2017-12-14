@@ -6,7 +6,7 @@ import (
 )
 
 type Asset struct {
-	Id      string `json:"-"`
+	ID      string `json:"id"`
 	Hash    string `json:"hash,omAssetpty"`
 	Content string `json:"content"`
 }
@@ -24,17 +24,17 @@ func (a *Asset) SHA() string {
 }
 
 func (i *Asset) Path() string {
-	return fmt.Sprintf("/assets/%s", i.Id)
+	return fmt.Sprintf("assets/%s", i.ID)
 }
 
-var assetPath = regexp.MustCompile("/assets/([^/]+)")
+var assetPath = regexp.MustCompile("assets/([^/]+)")
 
 func (i *Asset) SetPath(filepath string) error {
 	p := assetPath.FindStringSubmatch(filepath)
 	if len(p) == 0 {
 		return ErrContent
 	}
-	i.Id = p[1]
+	i.ID = p[1]
 	return nil
 }
 

@@ -142,11 +142,15 @@ func downloadRun(cmd *cobra.Command, args []string) {
 			for _, s := range cat.Subcategories() {
 				sub := cat.Sub(s)
 				printCmp(sub)
-				if check := sub.Checks(); check.HasChildren() {
-					printCmp(check)
-				}
-				for _, i := range sub.ItemNames() {
-					printCmp(sub.Item(i))
+				for _, d := range sub.DifficultyNames() {
+					diff := sub.Difficulty(d)
+					printCmp(diff)
+					if check := diff.Checks(); check.HasChildren() {
+						printCmp(check)
+					}
+					for _, i := range diff.ItemNames() {
+						printCmp(diff.Item(i))
+					}
 				}
 			}
 		}

@@ -8,7 +8,7 @@ import (
 )
 
 type Checklist struct {
-	parent *Subcategory
+	parent *Difficulty
 	Hash   string  `json:"hash"`
 	Checks []Check `json:"checks"`
 }
@@ -17,8 +17,7 @@ func (c *Checklist) Resource() Resource {
 	var content = make([]map[string]string, 0, len(c.Checks))
 	for _, c := range c.Checks {
 		content = append(content, map[string]string{
-			"difficulty": c.Difficulty,
-			"text":       c.Text,
+			"text": c.Text,
 		})
 	}
 	return Resource{
@@ -28,17 +27,16 @@ func (c *Checklist) Resource() Resource {
 }
 
 type Check struct {
-	Difficulty string `json:"difficulty"`
-	Text       string `json:"text"`
-	NoCheck    bool   `json:"no_check"`
+	Text    string `json:"text"`
+	NoCheck bool   `json:"no_check"`
 }
 
-func (c *Check) order() []string { return []string{"Text", "Difficulty", "NoCheck"} }
-func (c *Check) pointers() args  { return args{&c.Text, &c.Difficulty, &c.NoCheck} }
-func (c *Check) values() args    { return args{c.Text, c.Difficulty, c.NoCheck} }
+func (c *Check) order() []string { return []string{"Text", "NoCheck"} }
+func (c *Check) pointers() args  { return args{&c.Text, &c.NoCheck} }
+func (c *Check) values() args    { return args{c.Text, c.NoCheck} }
 
-func (c *Checklist) SetParent(s *Subcategory) {
-	c.parent = s
+func (c *Checklist) SetParent(d *Difficulty) {
+	c.parent = d
 }
 
 func (c *Checklist) HasChildren() bool {
@@ -53,7 +51,7 @@ func (c *Checklist) Path() string {
 	return fmt.Sprintf("%s/.checks%s", c.parent.basePath(), fileExt)
 }
 
-var checklistPath = regexp.MustCompile("/contents(?:_[a-z]{2})?/[^/]+/[^/]+/.checks.md")
+var checklistPath = regexp.MustCompile("contents(?:_[a-z]{2})?/[^/]+/[^/]+/[^/]+/.checks.md")
 
 func (*Checklist) SetPath(filepath string) error {
 	p := checklistPath.FindString(filepath)

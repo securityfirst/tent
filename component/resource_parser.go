@@ -24,7 +24,7 @@ type ResourceParser struct {
 }
 
 func (r *ResourceParser) add(c *Category) {
-	r.index[[2]string{c.Id, c.Locale}] = len(r.categories)
+	r.index[[2]string{c.ID, c.Locale}] = len(r.categories)
 	r.categories = append(r.categories, c)
 }
 
@@ -50,6 +50,8 @@ func (r *ResourceParser) Parse(cmp Component, res *Resource, locale string) erro
 		return r.parseCategory(v, res, locale)
 	case *Subcategory:
 		return r.parseSubcategory(v, res, locale)
+	case *Difficulty:
+		return r.parseDifficulty(v, res, locale)
 	case *Item:
 		return r.parseItem(v, res, locale)
 	case *Checklist:
@@ -64,7 +66,7 @@ func (r *ResourceParser) parseCategory(c *Category, res *Resource, locale string
 		return ErrContent
 	}
 	r.add(&Category{
-		Id:     c.Id,
+		ID:     c.ID,
 		Order:  c.Order,
 		Name:   res.Content[0]["name"],
 		Locale: locale,
@@ -76,14 +78,33 @@ func (r *ResourceParser) parseSubcategory(s *Subcategory, res *Resource, locale 
 	if len(res.Content) != 1 {
 		return ErrContent
 	}
-	cat := r.get(s.parent.Id, locale)
+	cat := r.get(s.parent.ID, locale)
 	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", s.parent.Id, locale)
+		return fmt.Errorf("No cat %q (%s)", s.parent.ID, locale)
 	}
 	cat.Add(&Subcategory{
-		Id:    s.Id,
+		ID:    s.ID,
 		Order: s.Order,
 		Name:  res.Content[0]["name"],
+	})
+	return nil
+}
+
+func (r *ResourceParser) parseDifficulty(d *Difficulty, res *Resource, locale string) error {
+	if len(res.Content) != 1 {
+		return ErrContent
+	}
+	cat := r.get(d.parent.parent.ID, locale)
+	if cat == nil {
+		return fmt.Errorf("No cat %q (%s)", d.parent.parent.ID, locale)
+	}
+	sub := cat.Sub(d.parent.ID)
+	if sub == nil {
+		return fmt.Errorf("No sub %q (%s)", d.parent.ID, locale)
+	}
+	sub.AddDifficulty(&Difficulty{
+		ID:    d.ID,
+		Descr: res.Content[0]["description"],
 	})
 	return nil
 }
@@ -92,25 +113,28 @@ func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error 
 	if len(res.Content) == 0 {
 		return ErrContent
 	}
-	cat := r.get(i.parent.parent.Id, locale)
+	cat := r.get(i.parent.parent.parent.ID, locale)
 	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", i.parent.parent.Id, locale)
+		return fmt.Errorf("No cat %q (%s)", i.parent.parent.ID, locale)
 	}
-	sub := cat.Sub(i.parent.Id)
+	sub := cat.Sub(i.parent.parent.ID)
 	if sub == nil {
-		return fmt.Errorf("No sub %q (%s)", i.parent.Id, locale)
+		return fmt.Errorf("No sub %q (%s)", i.parent.parent.ID, locale)
+	}
+	dif := sub.Difficulty(i.parent.ID)
+	if dif == nil {
+		return fmt.Errorf("No dif %q (%s)", i.parent.ID, locale)
 	}
 	item := &Item{
-		Id:         i.Id,
-		Difficulty: strings.TrimSpace(res.Content[0]["difficulty"]),
-		Title:      strings.TrimSpace(res.Content[0]["title"]),
-		Order:      i.Order,
+		ID:    i.ID,
+		Title: strings.TrimSpace(res.Content[0]["title"]),
+		Order: i.Order,
 	}
 	r.buffer.Reset()
 	// Old Version Compatibility
 	if res.Content[0]["body"] != "" {
 		if len(res.Content) != 1 {
-			return fmt.Errorf("Invalid Legacy %q (%s)", i.parent.Id, locale)
+			return fmt.Errorf("Invalid Legacy %q (%s)", i.parent.ID, locale)
 		}
 		r.buffer.WriteString(strings.TrimSpace(res.Content[0]["body"]))
 	} else {
@@ -122,33 +146,38 @@ func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error 
 		}
 	}
 	item.Body = r.buffer.String()
-	sub.AddItem(item)
+	dif.AddItem(item)
 	return nil
 }
 
 func (r *ResourceParser) parseChecklist(c *Checklist, res *Resource, locale string) error {
+	cat := r.get(c.parent.parent.parent.ID, locale)
+	if cat == nil {
+		return fmt.Errorf("No cat %q (%s)", c.parent.parent.ID, locale)
+	}
+	sub := cat.Sub(c.parent.parent.ID)
+	if sub == nil {
+		return fmt.Errorf("No sub %q (%s)", c.parent.parent.ID, locale)
+	}
+	dif := sub.Difficulty(c.parent.ID)
+	if dif == nil {
+		return fmt.Errorf("No dif %q (%s)", c.parent.ID, locale)
+	}
+
 	for len(res.Content) > 0 && res.Content[0] == nil {
 		res.Content = res.Content[1:]
 	}
 	if l, e := len(res.Content), len(c.Checks); l != e {
 		return fmt.Errorf("%d checks, %s expected", l, e)
 	}
+
 	var checks Checklist
 	for i, r := range res.Content {
 		checks.Add(Check{
-			Difficulty: strings.TrimSpace(r["difficulty"]),
-			Text:       strings.TrimSpace(r["text"]),
-			NoCheck:    c.Checks[i].NoCheck,
+			Text:    strings.TrimSpace(r["text"]),
+			NoCheck: c.Checks[i].NoCheck,
 		})
 	}
-	cat := r.get(c.parent.parent.Id, locale)
-	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", c.parent.parent.Id, locale)
-	}
-	sub := cat.Sub(c.parent.Id)
-	if sub == nil {
-		return fmt.Errorf("No sub %q (%s)", c.parent.Id, locale)
-	}
-	sub.SetChecks(&checks)
+	dif.SetChecks(&checks)
 	return nil
 }

@@ -72,7 +72,7 @@ func setMetaValue(p interface{}, v string) error {
 		if strings.TrimSpace(v) == "" {
 			return nil
 		}
-		*pointer = strings.Split(v, "|")
+		*pointer = strings.Split(v, ";")
 	default:
 		return fmt.Errorf("unknown type %T", pointer)
 	}
@@ -88,7 +88,7 @@ func getMeta(m meta) string {
 		}
 		switch t := v.(type) {
 		case []string:
-			v = strings.Join(t, "|")
+			v = strings.Join(t, ";")
 		}
 		fmt.Fprintf(b, "[%s]: # (%v)", order[i], v)
 	}

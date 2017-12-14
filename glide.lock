@@ -1,5 +1,5 @@
 hash: d4a2d6cd8c15f33020acbac79ccc41ceed5e7f55da9c99a82f8b5198e86847de
-updated: 2017-09-20T17:19:40.1255164+02:00
+updated: 2017-12-12T13:11:35.9882929Z
 imports:
 - name: github.com/cenkalti/log
   version: 958ee7afc008e65fe479a565819a25b30af0ec65
@@ -139,8 +139,6 @@ imports:
   - urlfetch
 - name: gopkg.in/go-playground/validator.v8
   version: c193cecd124b5cc722d7ee5538e945bdb3348435
-- name: gopkg.in/sourcegraph/go-vcsurl.v1
-  version: 6b12603ea6fd7f84b8c90118face09df39ea10c6
 - name: gopkg.in/src-d/go-billy.v3
   version: c329b7bc7b9d24905d2bc1b85bfa29f7ae266314
   subpackages:
@@ -148,23 +146,6 @@ imports:
   - helper/polyfill
   - osfs
   - util
-- name: gopkg.in/src-d/go-git.v3
-  version: 02c228585e543413479ea36d3a2bbc80a070eb93
-  subpackages:
-  - clients
-  - clients/common
-  - clients/http
-  - clients/ssh
-  - core
-  - diff
-  - formats/idxfile
-  - formats/packfile
-  - formats/pktline
-  - storage/memory
-  - storage/seekable
-  - storage/seekable/internal/gitdir
-  - storage/seekable/internal/index
-  - utils/fs
 - name: gopkg.in/src-d/go-git.v4
   version: f9879dd043f84936a1f8acb8a53b74332a7ae135
   subpackages:
@@ -208,7 +189,7 @@ imports:
   - utils/merkletrie/internal/frame
   - utils/merkletrie/noder
 - name: gopkg.in/warnings.v0
-  version: 8a331561fe74dadba6edfc59f3be66c22c3b065d
+  version: ec4a0fea49c7b46c2aeb0b51aac55779c607e52b
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports:

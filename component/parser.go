@@ -30,7 +30,9 @@ func (p *Parser) Parse(t *object.Tree) error {
 	for i := range p.categories {
 		sort.Sort(subSorter(p.categories[i].subcategories))
 		for j := range p.categories[i].subcategories {
-			sort.Sort(itemSorter(p.categories[i].subcategories[j].items))
+			for k := range p.categories[i].subcategories[j].difficulties {
+				sort.Sort(itemSorter(p.categories[i].subcategories[j].difficulties[k].items))
+			}
 		}
 	}
 	return nil
@@ -60,50 +62,69 @@ func (p *Parser) parseFile(f *object.File) error {
 	if err != nil {
 		return parseError{f.Name, "read", err}
 	}
-	cmp, err := newCmp("/" + f.Name)
+	cmp, err := newCmp(f.Name)
 	if err != nil {
 		return parseError{f.Name, "cmp", err}
 	}
-	parts := strings.Split(f.Name, "/")
-	if err := cmp.SetPath("/" + f.Name); err != nil {
-		return parseError{f.Name, "path", err}
-	}
-
-	idx := [2]string{parts[1], f.Name[9:11]}
-	if cat, ok := cmp.(*Category); ok {
-		p.index[idx] = len(p.categories)
-		p.categories = append(p.categories, cat)
-	} else {
-		cat := p.categories[p.index[idx]]
-		if cat == nil {
-			return parseError{f.Name, "path", "Invalid cat"}
-		}
-		switch c := cmp.(type) {
-		case *Subcategory:
-			cat.Add(c)
-		case *Item:
-			sub := cat.Sub(parts[2])
-			if sub == nil {
-				return parseError{f.Name, "path", "Invalid sub"}
-			}
-			sub.AddItem(c)
-
-		case *Checklist:
-			sub := cat.Sub(parts[2])
-			if sub == nil {
-				return parseError{f.Name, "path", "Invalid sub"}
-			}
-			sub.SetChecks(c)
-		case *Asset:
-			p.assets = append(p.assets, c)
-		case *Form:
-			p.forms = append(p.forms, c)
-		default:
-			return parseError{f.Name, "type", "Invalid Path"}
-		}
+	if err := p.setPath(f.Name, cmp); err != nil {
+		return err
 	}
 	if err := cmp.SetContents(strings.TrimSpace(contents)); err != nil {
 		return parseError{f.Name, "contents", err}
+	}
+	return nil
+}
+
+func (p *Parser) setPath(name string, cmp Component) error {
+	switch c := cmp.(type) {
+	case *Asset:
+		p.assets = append(p.assets, c)
+		return nil
+	case *Form:
+		p.forms = append(p.forms, c)
+		return nil
+	}
+	parts := strings.Split(name, "/")
+	if err := cmp.SetPath(name); err != nil {
+		return parseError{name, "path", err}
+	}
+
+	idx := [2]string{parts[1], name[9:11]}
+	if cat, ok := cmp.(*Category); ok {
+		p.index[idx] = len(p.categories)
+		p.categories = append(p.categories, cat)
+		return nil
+	}
+	cat := p.categories[p.index[idx]]
+	if cat == nil {
+		return parseError{name, "path", "Invalid cat"}
+	}
+
+	if sub, ok := cmp.(*Subcategory); ok {
+		cat.Add(sub)
+		return nil
+	}
+	sub := cat.Sub(parts[2])
+	if sub == nil {
+		return parseError{name, "path", "Invalid sub"}
+	}
+
+	if dif, ok := cmp.(*Difficulty); ok {
+		sub.AddDifficulty(dif)
+		return nil
+	}
+	dif := sub.Difficulty(parts[3])
+	if dif == nil {
+		return parseError{name, "path", "Invalid diff"}
+	}
+
+	switch c := cmp.(type) {
+	case *Item:
+		dif.AddItem(c)
+	case *Checklist:
+		dif.SetChecks(c)
+	default:
+		return parseError{name, "type", "Invalid Path"}
 	}
 	return nil
 }
