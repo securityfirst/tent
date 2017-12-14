@@ -15,10 +15,14 @@
 package cmd
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/securityfirst/tent"
@@ -36,6 +40,10 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		e := gin.Default()
+		srv := &http.Server{
+			Addr:    fmt.Sprintf(":%v", config.Port),
+			Handler: e,
+		}
 		r, err := newRepo()
 		if err != nil {
 			log.Fatalf("Repo error: %s", err)
@@ -43,7 +51,20 @@ var runCmd = &cobra.Command{
 
 		o := tent.New(r)
 		o.Register(e.Group("/v2"), config.Config)
-		e.Run(fmt.Sprintf(":%v", config.Port))
+
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt)
+		go func() {
+			if err := e.Run(fmt.Sprintf(":%v", config.Port)); err != nil {
+				log.Fatal(err)
+			}
+		}()
+
+		<-stop
+		log.Println("Shutting down the server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		srv.Shutdown(ctx)
 	},
 }
 
