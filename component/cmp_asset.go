@@ -6,7 +6,7 @@ import (
 )
 
 type Asset struct {
-	ID      string `json:"-"`
+	ID      string `json:"id"`
 	Hash    string `json:"hash,omAssetpty"`
 	Content string `json:"content"`
 }

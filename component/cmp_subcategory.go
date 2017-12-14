@@ -8,7 +8,7 @@ import (
 
 type Subcategory struct {
 	parent       *Category
-	ID           string  `json:"-"`
+	ID           string  `json:"id"`
 	Name         string  `json:"name"`
 	Hash         string  `json:"hash"`
 	Order        float64 `json:"-"`
@@ -34,6 +34,7 @@ func (s *Subcategory) Tree(html bool) interface{} {
 		difficulties[i] = v.Tree(html)
 	}
 	return map[string]interface{}{
+		"id":           s.ID,
 		"name":         s.Name,
 		"difficulties": difficulties,
 	}

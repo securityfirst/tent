@@ -12,7 +12,7 @@ const paragraphSep = "\n\n"
 
 type Item struct {
 	parent   *Difficulty
-	ID       string `json:"-"`
+	ID       string `json:"id"`
 	Hash     string `json:"hash,omitempty"`
 	Title    string `json:"title"`
 	Body     string `json:"body"`

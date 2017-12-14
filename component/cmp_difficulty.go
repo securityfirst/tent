@@ -8,7 +8,7 @@ import (
 
 type Difficulty struct {
 	parent    *Subcategory
-	ID        string `json:"-"`
+	ID        string `json:"id"`
 	Name      string `json:"name"`
 	Hash      string `json:"hash"`
 	items     []*Item
@@ -37,6 +37,7 @@ func (d *Difficulty) Tree(html bool) interface{} {
 		}
 	}
 	return map[string]interface{}{
+		"id":     d.ID,
 		"name":   d.Name,
 		"items":  items,
 		"checks": d.checklist.Checks,

@@ -7,7 +7,7 @@ import (
 )
 
 type Category struct {
-	ID            string  `json:"-"`
+	ID            string  `json:"id"`
 	Name          string  `json:"name"`
 	Hash          string  `json:"hash"`
 	Locale        string  `json:"-"`
@@ -38,6 +38,7 @@ func (c *Category) Tree(html bool) interface{} {
 		subs = append(subs, c.subcategories[i].Tree(html))
 	}
 	return map[string]interface{}{
+		"id":            c.ID,
 		"name":          c.Name,
 		"subcategories": subs,
 	}

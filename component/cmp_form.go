@@ -8,7 +8,7 @@ import (
 )
 
 type Form struct {
-	ID      string       `json:"-"`
+	ID      string       `json:"id"`
 	Name    string       `json:"name"`
 	Hash    string       `json:"hash"`
 	Locale  string       `json:"-"`
