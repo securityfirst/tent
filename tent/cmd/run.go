@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/securityfirst/tent"
+	"gopkg.in/securityfirst/tent.v2"
 	"github.com/spf13/cobra"
 )
 

@@ -1,4 +1,4 @@
-package: github.com/securityfirst/tent
+package: gopkg.in/securityfirst/tent.v2
 import:
 - package: github.com/google/go-github
 - package: golang.org/x/oauth2

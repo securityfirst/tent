@@ -20,7 +20,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/securityfirst/tent/transifex"
+	"gopkg.in/securityfirst/tent.v2/transifex"
 	"github.com/spf13/cobra"
 )
 
