@@ -51,8 +51,9 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 		}
 	})
 
-	// Authorized handlers
-	authorized := root.Use(h.ParseLocale, func(c *gin.Context) {
+	// Locale and Authorized handlers
+	locale := root.Use(h.ParseLocale)
+	authorized := locale.Use(func(c *gin.Context) {
 		user := engine.GetUser(c)
 		if user != nil {
 			c.Set("user", user)
@@ -62,31 +63,31 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 		c.Abort()
 	})
 
-	authorized.GET(pathInfo, h.Info)
-	authorized.GET(pathRepo, h.Root)
+	locale.GET(pathInfo, h.Info)
+	locale.GET(pathRepo, h.Root)
 
-	authorized.GET(pathCategory, h.SetCat, h.Show)
+	locale.GET(pathCategory, h.SetCat, h.Show)
 	authorized.PUT(pathCategory, h.ParseCat, h.Update)
 	authorized.DELETE(pathCategory, h.ParseCat, h.CanDelete, h.Delete)
 	authorized.POST(pathCategory, h.ParseCat, h.IsNew, h.Create)
 
-	authorized.GET(pathSubcategory, h.SetSub, h.Show)
+	locale.GET(pathSubcategory, h.SetSub, h.Show)
 	authorized.PUT(pathSubcategory, h.ParseSub, h.Update)
 	authorized.DELETE(pathSubcategory, h.ParseSub, h.CanDelete, h.Delete)
 	authorized.POST(pathSubcategory, h.ParseSub, h.IsNew, h.Create)
 
-	authorized.GET(pathItem, h.SetItem, h.Show)
+	locale.GET(pathItem, h.SetItem, h.Show)
 	authorized.PUT(pathItem, h.ParseItem, h.Update)
 	authorized.DELETE(pathItem, h.ParseItem, h.CanDelete, h.Delete)
 	authorized.POST(pathItem, h.ParseItem, h.IsNew, h.Create)
 
-	authorized.GET(pathCheck, h.SetCheck, h.Show)
+	locale.GET(pathCheck, h.SetCheck, h.Show)
 	authorized.PUT(pathCheck, h.ParseCheck, h.Update)
 
-	authorized.GET(pathAssetId, h.SetAsset, h.AssetShow)
+	locale.GET(pathAssetId, h.SetAsset, h.AssetShow)
 	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
 
-	authorized.GET(pathForm, h.SetForm, h.Show)
+	locale.GET(pathForm, h.SetForm, h.Show)
 	authorized.PUT(pathForm, h.ParseForm, h.Update)
 	authorized.DELETE(pathForm, h.ParseForm, h.CanDelete, h.Delete)
 	authorized.POST(pathForm, h.ParseForm, h.IsNew, h.Create)
