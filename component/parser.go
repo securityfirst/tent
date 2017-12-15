@@ -76,6 +76,9 @@ func (p *Parser) parseFile(f *object.File) error {
 }
 
 func (p *Parser) setPath(name string, cmp Component) error {
+	if err := cmp.SetPath(name); err != nil {
+		return parseError{name, "path", err}
+	}
 	switch c := cmp.(type) {
 	case *Asset:
 		p.assets = append(p.assets, c)
@@ -84,11 +87,8 @@ func (p *Parser) setPath(name string, cmp Component) error {
 		p.forms = append(p.forms, c)
 		return nil
 	}
-	parts := strings.Split(name, "/")
-	if err := cmp.SetPath(name); err != nil {
-		return parseError{name, "path", err}
-	}
 
+	parts := strings.Split(name, "/")
 	idx := [2]string{parts[1], name[9:11]}
 	if cat, ok := cmp.(*Category); ok {
 		p.index[idx] = len(p.categories)
