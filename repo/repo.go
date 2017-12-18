@@ -13,9 +13,9 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 	"gopkg.in/securityfirst/tent.v2/component"
 	"gopkg.in/securityfirst/tent.v2/models"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -191,7 +191,7 @@ func (r *Repo) file(c component.Component) (*object.File, error) {
 	}
 	r.RLock()
 	defer r.RUnlock()
-	return r.commit.File(c.Path()[1:])
+	return r.commit.File(c.Path()[:])
 }
 
 func (r *Repo) Get(c component.Component) (string, error) {
@@ -269,7 +269,7 @@ func (r *Repo) Update(c component.Component, u *models.User) error {
 }
 
 func (r *Repo) request(c component.Component, action int, u *models.User) (err error) {
-	file := c.Path()[1:]
+	file := c.Path()
 	msg := fmt.Sprintf("%s %s", commitMsg[action], file)
 	commit := &github.RepositoryContentFileOptions{
 		Message: &msg, Author: u.AsAuthor(),

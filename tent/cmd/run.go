@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/securityfirst/tent.v2"
 	"github.com/spf13/cobra"
+	"gopkg.in/securityfirst/tent.v2"
 )
 
 // runCmd respresents the run command
@@ -41,7 +41,7 @@ var runCmd = &cobra.Command{
 		}
 		e := gin.Default()
 		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%v", config.Port),
+			Addr:    fmt.Sprintf(":%v", config.Server.Port),
 			Handler: e,
 		}
 		r, err := newRepo()
@@ -50,15 +50,11 @@ var runCmd = &cobra.Command{
 		}
 
 		o := tent.New(r)
-		o.Register(e.Group("/v2"), config.Config)
+		o.Register(e.Group(config.Server.Prefix), config.Config)
 
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt)
-		go func() {
-			if err := e.Run(fmt.Sprintf(":%v", config.Port)); err != nil {
-				log.Fatal(err)
-			}
-		}()
+		go srv.ListenAndServe()
 
 		<-stop
 		log.Println("Shutting down the server...")

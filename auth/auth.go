@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
-	"gopkg.in/securityfirst/tent.v2/models"
 	"golang.org/x/oauth2"
+	"gopkg.in/securityfirst/tent.v2/models"
 )
 
 const (
@@ -19,7 +19,11 @@ const (
 
 // NewEngine creates a new Engine using and adds the handle for authentication
 func NewEngine(conf Config, root *gin.RouterGroup) *Engine {
-	var e = Engine{config: conf.OAuth(root), encrypter: encrypter(conf.RandomString)}
+	var e = Engine{
+		config:    conf.OAuth(root),
+		encrypter: encrypter(conf.RandomString),
+	}
+	e.config.Scopes = []string{"repo"}
 	conf.Login.Redirect = e.config.AuthCodeURL(conf.RandomString, oauth2.AccessTypeOnline)
 	conf.Callback.Redirect = path.Clean(root.BasePath() + conf.Callback.Redirect)
 	conf.Logout.Redirect = path.Clean(root.BasePath() + conf.Logout.Redirect)
