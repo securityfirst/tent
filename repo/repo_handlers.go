@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-github/github"
 	"gopkg.in/securityfirst/tent.v2/component"
 	"gopkg.in/securityfirst/tent.v2/models"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 var (
@@ -52,13 +53,17 @@ func (r *RepoHandler) cmp(c *gin.Context) component.Component {
 	if !ok {
 		return cat.(component.Component)
 	}
+	diff, ok := c.Get("diff")
+	if !ok {
+		return sub.(component.Component)
+	}
 	if item, ok := c.Get("item"); ok {
 		return item.(component.Component)
 	}
 	if check, ok := c.Get("checks"); ok {
 		return check.(component.Component)
 	}
-	return sub.(component.Component)
+	return diff.(component.Component)
 }
 
 func (r *RepoHandler) user(c *gin.Context) *models.User {
@@ -252,12 +257,16 @@ func (r *RepoHandler) ParseItem(c *gin.Context) {
 }
 
 func (r *RepoHandler) SetCheck(c *gin.Context) {
-	r.SetSub(c)
-	c.Set("checks", r.diff(c).Checks())
+	r.SetDiff(c)
+	diff := r.diff(c)
+	if diff.Checks() == nil {
+		diff.SetChecks(&component.Checklist{Checks: []component.Check{}})
+	}
+	c.Set("checks", diff.Checks())
 }
 
 func (r *RepoHandler) ParseCheck(c *gin.Context) {
-	r.SetSub(c)
+	r.SetDiff(c)
 	var check component.Checklist
 	if err := c.BindJSON(&check); err != nil {
 		r.err(c, http.StatusBadRequest, err)
@@ -324,12 +333,38 @@ func (r *RepoHandler) Root(c *gin.Context) {
 	})
 }
 
+func (r *RepoHandler) ShowChecks(c *gin.Context) {
+	cmp := r.cmp(c)
+	hash, err := r.repo.ComponentHash(cmp)
+	if err != nil && err != object.ErrFileNotFound {
+		r.err(c, http.StatusInternalServerError, err)
+		return
+	}
+	cmp.(*component.Checklist).Hash = hash
+	c.JSON(http.StatusOK, cmp)
+}
+
+func (r *RepoHandler) UpdateChecks(c *gin.Context) {
+	hash, err := r.repo.ComponentHash(r.cmp(c))
+	if err != nil && err != object.ErrFileNotFound {
+		r.err(c, http.StatusInternalServerError, err)
+		return
+	}
+	if hash != "" {
+		r.Update(c)
+	} else {
+		r.Create(c)
+	}
+}
+
 func (r *RepoHandler) Show(c *gin.Context) {
 	cmp := r.cmp(c)
 	hash, err := r.repo.ComponentHash(cmp)
 	if err != nil {
-		r.err(c, http.StatusInternalServerError, err)
-		return
+		if _, ok := cmp.(*component.Checklist); !ok || err != object.ErrFileNotFound {
+			r.err(c, http.StatusInternalServerError, err)
+			return
+		}
 	}
 	var out interface{}
 	switch t := cmp.(type) {
@@ -338,6 +373,10 @@ func (r *RepoHandler) Show(c *gin.Context) {
 		v.Hash = hash
 		out = &v
 	case *component.Subcategory:
+		v := *t
+		v.Hash = hash
+		out = &v
+	case *component.Difficulty:
 		v := *t
 		v.Hash = hash
 		out = &v

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	git "gopkg.in/src-d/go-git.v4"
@@ -17,6 +18,8 @@ import (
 	"gopkg.in/securityfirst/tent.v2/component"
 	"gopkg.in/securityfirst/tent.v2/models"
 )
+
+var logger = log.New(os.Stdout, "[repo]", log.Ltime|log.Lshortfile)
 
 var (
 	ErrNotReady     = errors.New("Repository not ready")
@@ -37,7 +40,7 @@ var commitMsg = map[int]string{
 
 func New(owner, name, branch string) (*Repo, error) {
 	address := repoAddress(owner, name)
-	log.Printf("Using %q", address)
+	logger.Printf("Using %q", address)
 	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: address})
 	if err != nil {
 		return nil, err
@@ -148,36 +151,36 @@ func (r *Repo) Pull() {
 
 	err := r.repo.Fetch(&git.FetchOptions{})
 	if err != nil && err != git.NoErrAlreadyUpToDate {
-		log.Println("Pull failed:", err)
+		logger.Println("Pull failed:", err)
 		return
 	}
 	branch := plumbing.ReferenceName("refs/remotes/origin/" + r.branch)
 	hash, err := r.repo.Reference(branch, false)
 	if err != nil {
-		log.Printf("Reference %q failed:", branch, err)
+		logger.Printf("Reference %q failed:", branch, err)
 		return
 	}
 	if r.commit != nil && r.commit.Hash == hash.Hash() {
 		return
 	}
 	if r.commit != nil {
-		log.Println("Changing commit from", r.commit.Hash, "to", hash)
+		logger.Println("Changing commit from", r.commit.Hash, "to", hash)
 	} else {
-		log.Println("Checkout with", hash)
+		logger.Println("Checkout with", hash)
 	}
 	r.commit, err = r.repo.CommitObject(hash.Hash())
 	if err != nil {
-		log.Println("Commit failed:", err)
+		logger.Println("Commit failed:", err)
 		return
 	}
 	var parser component.Parser
 	tree, err := r.commit.Tree()
 	if err != nil {
-		log.Println("Tree failed:", err)
+		logger.Println("Tree failed:", err)
 		return
 	}
 	if err := parser.Parse(tree); err != nil {
-		log.Println("Parsing failed:", err)
+		logger.Println("Parsing failed:", err)
 		return
 	}
 	r.categories = parser.Categories()

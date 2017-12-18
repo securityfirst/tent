@@ -17,11 +17,12 @@ const (
 	pathUpdate      = "/api/repo/update"
 	pathCategory    = "/api/repo/category/:cat"
 	pathSubcategory = "/api/repo/category/:cat/:sub"
-	pathItem        = "/api/repo/category/:cat/:sub/item/:item"
+	pathDifficulty  = "/api/repo/category/:cat/:sub/:diff"
+	pathItem        = "/api/repo/category/:cat/:sub/:diff/item/:item"
+	pathCheck       = "/api/repo/category/:cat/:sub/:diff/checks"
 	pathAsset       = "/api/repo/asset"
 	pathAssetId     = "/api/repo/asset/:asset"
 	pathForm        = "/api/repo/form/:form"
-	pathCheck       = "/api/repo/category/:cat/:sub/checks"
 )
 
 func New(r *repo.Repo) *Tent {
@@ -76,13 +77,18 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	authorized.DELETE(pathSubcategory, h.ParseSub, h.CanDelete, h.Delete)
 	authorized.POST(pathSubcategory, h.ParseSub, h.IsNew, h.Create)
 
+	locale.GET(pathDifficulty, h.SetDiff, h.Show)
+	authorized.PUT(pathDifficulty, h.ParseDiff, h.Update)
+	authorized.DELETE(pathDifficulty, h.ParseDiff, h.CanDelete, h.Delete)
+	authorized.POST(pathDifficulty, h.ParseDiff, h.IsNew, h.Create)
+
 	locale.GET(pathItem, h.SetItem, h.Show)
 	authorized.PUT(pathItem, h.ParseItem, h.Update)
 	authorized.DELETE(pathItem, h.ParseItem, h.CanDelete, h.Delete)
 	authorized.POST(pathItem, h.ParseItem, h.IsNew, h.Create)
 
-	locale.GET(pathCheck, h.SetCheck, h.Show)
-	authorized.PUT(pathCheck, h.ParseCheck, h.Update)
+	locale.GET(pathCheck, h.SetCheck, h.ShowChecks)
+	authorized.PUT(pathCheck, h.ParseCheck, h.UpdateChecks)
 
 	locale.GET(pathAssetId, h.SetAsset, h.AssetShow)
 	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
