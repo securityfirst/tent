@@ -50,8 +50,9 @@ Config:
     Endpoint: "/auth/logout"
   Callback:
     Endpoint: "/auth/callback"
-  RandomString: "whatever"
-Port: 80
+  State: "whatever"
+Server:  
+  Port: 80
 Transifex:
   Project: "project-name"
   Username: "user"
