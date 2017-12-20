@@ -49,13 +49,13 @@ func NewEngine(conf Config, root *gin.RouterGroup) *Engine {
 		}
 		code := c.Query("code")
 		token, err := e.config.Exchange(oauth2.NoContext, code)
-		if err != nil {
+		if err != nil || !token.Valid() {
 			log.Printf("Cannot get Token: %s", err)
 			c.Redirect(http.StatusTemporaryRedirect, "/")
 			return
 		}
 		c.SetCookie(githubUser, token.AccessToken, 614880, "/", "", false, false)
-		c.JSON(200, gin.H{"token": token.AccessToken})
+		c.JSON(200, token)
 	})
 	return &e
 }
@@ -67,30 +67,40 @@ type Engine struct {
 	cache  map[string]models.User
 }
 
-// GetUser returns the user connected
-func (e *Engine) GetUser(c *gin.Context) (models.User, error) {
+func (e *Engine) EnsureUser(c *gin.Context) {
 	var token string
 	if auth := c.Request.Header.Get("Authorization"); auth != "" {
 		parts := strings.Split(auth, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			return models.User{}, fmt.Errorf("Invalid header %q", auth)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid authorization"})
+			c.Abort()
+			return
 		}
 		token = parts[1]
 	} else {
 		cookie, err := c.Cookie(githubUser)
-		if err != nil {
-			return models.User{}, err
+		if err != nil && err != http.ErrNoCookie {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid cookie"})
+			c.Abort()
+			return
 		}
 		token = cookie
 	}
-	if err := e.ensureUser(token); err != nil {
-		return models.User{}, nil
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "access denied"})
+		c.Abort()
+		return
+	}
+	if err := e.fetchUser(token); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.Abort()
+		return
 	}
 	c.Set("token", token)
-	return e.cache[token], nil
+	c.Set("user", e.cache[token])
 }
 
-func (e *Engine) ensureUser(token string) error {
+func (e *Engine) fetchUser(token string) error {
 	if _, ok := e.cache[token]; ok {
 		return nil
 	}

@@ -1,7 +1,6 @@
 package tent
 
 import (
-	"net/http"
 	"time"
 
 	"log"
@@ -55,15 +54,7 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 
 	// Locale and Authorized handlers
 	locale := root.Use(h.ParseLocale)
-	authorized := locale.Use(func(c *gin.Context) {
-		user, err := engine.GetUser(c)
-		if err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
-			c.Abort()
-			return
-		}
-		c.Set("user", user)
-	})
+	authorized := locale.Use(engine.EnsureUser)
 
 	locale.GET(pathInfo, h.Info)
 	locale.GET(pathRepo, h.Root)
