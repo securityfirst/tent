@@ -35,7 +35,7 @@ var runCmd = &cobra.Command{
 	Short: "Starts CMS",
 	Long:  `Starts the Tent CMS`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if config.Id == "" || config.Secret == "" {
+		if config.ID == "" || config.Secret == "" {
 			flag.Usage()
 			os.Exit(1)
 		}

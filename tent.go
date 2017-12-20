@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenkalti/log"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"gopkg.in/securityfirst/tent.v2/auth"
 	"gopkg.in/securityfirst/tent.v2/repo"
@@ -55,13 +56,13 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	// Locale and Authorized handlers
 	locale := root.Use(h.ParseLocale)
 	authorized := locale.Use(func(c *gin.Context) {
-		user := engine.GetUser(c)
-		if user != nil {
-			c.Set("user", user)
+		user, err := engine.GetUser(c)
+		if err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+			c.Abort()
 			return
 		}
-		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
-		c.Abort()
+		c.Set("user", user)
 	})
 
 	locale.GET(pathInfo, h.Info)
@@ -101,7 +102,7 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	loop(o.repo.Pull, 10*time.Minute, hookCh)
 
 	// Force first update
-	log.Info("First repo update...")
+	log.Println("First repo update...")
 	hookCh <- struct{}{}
 
 }

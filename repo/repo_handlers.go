@@ -66,8 +66,12 @@ func (r *RepoHandler) cmp(c *gin.Context) component.Component {
 	return diff.(component.Component)
 }
 
-func (r *RepoHandler) user(c *gin.Context) *models.User {
-	return c.MustGet("user").(*models.User)
+func (r *RepoHandler) token(c *gin.Context) string {
+	return c.MustGet("token").(string)
+}
+
+func (r *RepoHandler) user(c *gin.Context) models.User {
+	return c.MustGet("user").(models.User)
 }
 
 func (r *RepoHandler) asset(c *gin.Context) *component.Asset {
@@ -314,13 +318,8 @@ func (r *RepoHandler) ParseForm(c *gin.Context) {
 }
 
 func (r *RepoHandler) Info(c *gin.Context) {
-	u := r.user(c)
 	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"name":  u.Name,
-			"login": u.Login,
-			"email": u.Email,
-		},
+		"user": r.user(c),
 		"repo": r.repo,
 	})
 }
@@ -397,7 +396,7 @@ func (r *RepoHandler) Show(c *gin.Context) {
 }
 
 func (r *RepoHandler) Create(c *gin.Context) {
-	if err := r.repo.Create(r.cmp(c), r.user(c)); err != nil {
+	if err := r.repo.Create(r.cmp(c), r.user(c), r.token(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -405,7 +404,7 @@ func (r *RepoHandler) Create(c *gin.Context) {
 }
 
 func (r *RepoHandler) Update(c *gin.Context) {
-	if err := r.repo.Update(r.cmp(c), r.user(c)); err != nil {
+	if err := r.repo.Update(r.cmp(c), r.user(c), r.token(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -413,7 +412,7 @@ func (r *RepoHandler) Update(c *gin.Context) {
 }
 
 func (r *RepoHandler) Delete(c *gin.Context) {
-	if err := r.repo.Delete(r.cmp(c), r.user(c)); err != nil {
+	if err := r.repo.Delete(r.cmp(c), r.user(c), r.token(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -427,7 +426,7 @@ func (r *RepoHandler) AssetShow(c *gin.Context) {
 
 func (r *RepoHandler) AssetCreate(c *gin.Context) {
 	asset := r.asset(c)
-	if err := r.repo.Create(asset, r.user(c)); err != nil {
+	if err := r.repo.Create(asset, r.user(c), r.token(c)); err != nil {
 		r.err(c, http.StatusInternalServerError, err)
 		return
 	}

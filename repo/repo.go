@@ -92,8 +92,8 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 	}
 }
 
-func (r *Repo) client(u *models.User) *github.Client {
-	return github.NewClient(r.conf.Client(oauth2.NoContext, &u.Token))
+func (r *Repo) client(token string) *github.Client {
+	return github.NewClient(r.conf.Client(oauth2.NoContext, &oauth2.Token{AccessToken: token}))
 }
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
@@ -259,19 +259,19 @@ func (r *Repo) ComponentHash(c component.Component) (string, error) {
 	return f.Hash.String(), nil
 }
 
-func (r *Repo) Create(c component.Component, u *models.User) error {
-	return r.request(c, actionCreate, u)
+func (r *Repo) Create(c component.Component, u models.User, token string) error {
+	return r.request(c, actionCreate, u, token)
 }
 
-func (r *Repo) Delete(c component.Component, u *models.User) error {
-	return r.request(c, actionDelete, u)
+func (r *Repo) Delete(c component.Component, u models.User, token string) error {
+	return r.request(c, actionDelete, u, token)
 }
 
-func (r *Repo) Update(c component.Component, u *models.User) error {
-	return r.request(c, actionUpdate, u)
+func (r *Repo) Update(c component.Component, u models.User, token string) error {
+	return r.request(c, actionUpdate, u, token)
 }
 
-func (r *Repo) request(c component.Component, action int, u *models.User) (err error) {
+func (r *Repo) request(c component.Component, action int, u models.User, token string) (err error) {
 	file := c.Path()
 	msg := fmt.Sprintf("%s %s", commitMsg[action], file)
 	commit := &github.RepositoryContentFileOptions{
@@ -280,14 +280,14 @@ func (r *Repo) request(c component.Component, action int, u *models.User) (err e
 	switch action {
 	case actionCreate:
 		commit.Content = []byte(c.Contents())
-		_, _, err = r.client(u).Repositories.CreateFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.CreateFile(r.owner, r.name, file, commit)
 	case actionUpdate:
 		commit.SHA = strPtr(c.SHA())
 		commit.Content = []byte(c.Contents())
-		_, _, err = r.client(u).Repositories.UpdateFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.UpdateFile(r.owner, r.name, file, commit)
 	case actionDelete:
 		commit.SHA = strPtr(c.SHA())
-		_, _, err = r.client(u).Repositories.DeleteFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.DeleteFile(r.owner, r.name, file, commit)
 	}
 	if err == nil {
 		go r.Pull()
