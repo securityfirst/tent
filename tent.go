@@ -21,7 +21,7 @@ const (
 	pathItem        = "/api/repo/category/:cat/:sub/:diff/item/:item"
 	pathCheck       = "/api/repo/category/:cat/:sub/:diff/checks"
 	pathAsset       = "/api/repo/asset"
-	pathAssetId     = "/api/repo/asset/:asset"
+	pathAssetID     = "/api/repo/asset/:asset"
 	pathForm        = "/api/repo/form/:form"
 )
 
@@ -82,7 +82,7 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 	locale.GET(pathCheck, h.SetCheck, h.ShowChecks)
 	authorized.PUT(pathCheck, h.ParseCheck, h.UpdateChecks)
 
-	locale.GET(pathAssetId, h.SetAsset, h.AssetShow)
+	locale.GET(pathAssetID, h.SetAsset, h.AssetShow)
 	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
 
 	locale.GET(pathForm, h.SetForm, h.Show)
