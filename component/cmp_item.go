@@ -57,9 +57,10 @@ func (i *Item) SetPath(filepath string) error {
 	return nil
 }
 
-func (i *Item) order() []string { return []string{"Title", "Order"} }
-func (i *Item) pointers() args  { return args{&i.Title, &i.Order} }
-func (i *Item) values() args    { return args{i.Title, i.Order} }
+func (*Item) order() []string     { return []string{"Title", "Order"} }
+func (*Item) optionals() []string { return nil }
+func (i *Item) pointers() args    { return args{&i.Title, &i.Order} }
+func (i *Item) values() args      { return args{i.Title, i.Order} }
 
 func (i *Item) Contents() string {
 	return fmt.Sprint(getMeta(i), bodySeparator, i.Body)

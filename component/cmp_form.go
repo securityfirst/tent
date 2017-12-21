@@ -48,9 +48,10 @@ func (f *Form) SetPath(filepath string) error {
 	return nil
 }
 
-func (f *Form) order() []string { return []string{"Name"} }
-func (f *Form) pointers() args  { return args{&f.Name} }
-func (f *Form) values() args    { return args{f.Name} }
+func (*Form) order() []string     { return []string{"Name"} }
+func (*Form) optionals() []string { return nil }
+func (f *Form) pointers() args    { return args{&f.Name} }
+func (f *Form) values() args      { return args{f.Name} }
 
 func (f *Form) Contents() string {
 	b := bytes.NewBuffer(nil)
@@ -100,9 +101,10 @@ type FormScreen struct {
 	Items []FormInput `json:"items,omitempty"`
 }
 
-func (f *FormScreen) order() []string { return []string{"Type", "Name"} }
-func (f *FormScreen) pointers() args  { var s string; return args{&s, &f.Name} }
-func (f *FormScreen) values() args    { return args{"screen", f.Name} }
+func (*FormScreen) order() []string     { return []string{"Type", "Name"} }
+func (*FormScreen) optionals() []string { return nil }
+func (f *FormScreen) pointers() args    { var s string; return args{&s, &f.Name} }
+func (f *FormScreen) values() args      { return args{"screen", f.Name} }
 
 type FormInput struct {
 	Type    string   `json:"type"`
@@ -114,9 +116,13 @@ type FormInput struct {
 	Lines   int      `json:"lines,omitempty"`
 }
 
-func (f *FormInput) order() []string {
+func (*FormInput) order() []string {
 	return []string{"Type", "Name", "Label", "Value", "Options", "Hint", "Lines"}
 }
+func (*FormInput) optionals() []string {
+	return []string{"Value", "Options", "Hint", "Lines"}
+}
+
 func (f *FormInput) pointers() args {
 	return args{&f.Type, &f.Name, &f.Label, &f.Value, &f.Options, &f.Hint, &f.Lines}
 }

@@ -103,9 +103,10 @@ func (c *Category) SetPath(filepath string) error {
 	return nil
 }
 
-func (c *Category) order() []string { return []string{"Name", "Order"} }
-func (c *Category) pointers() args  { return args{&c.Name, &c.Order} }
-func (c *Category) values() args    { return args{c.Name, c.Order} }
+func (*Category) order() []string     { return []string{"Name", "Order"} }
+func (*Category) optionals() []string { return nil }
+func (c *Category) pointers() args    { return args{&c.Name, &c.Order} }
+func (c *Category) values() args      { return args{c.Name, c.Order} }
 
 func (c *Category) Contents() string {
 	return getMeta(c)

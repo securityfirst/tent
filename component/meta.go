@@ -10,6 +10,7 @@ import (
 
 type meta interface {
 	order() []string
+	optionals() []string
 	pointers() args
 	values() args
 }

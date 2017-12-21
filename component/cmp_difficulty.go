@@ -147,9 +147,10 @@ func (d *Difficulty) SetPath(filepath string) error {
 	return nil
 }
 
-func (d *Difficulty) order() []string { return []string{"Description"} }
-func (d *Difficulty) pointers() args  { return args{&d.Descr} }
-func (d *Difficulty) values() args    { return args{d.Descr} }
+func (*Difficulty) order() []string     { return []string{"Description"} }
+func (*Difficulty) optionals() []string { return nil }
+func (d *Difficulty) pointers() args    { return args{&d.Descr} }
+func (d *Difficulty) values() args      { return args{d.Descr} }
 
 func (d *Difficulty) Contents() string { return getMeta(d) }
 
