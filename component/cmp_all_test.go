@@ -36,7 +36,7 @@ func (*CmpSuite) TestParse(c *C) {
 		c.Log(cat.Name)
 		for _, sub := range cat.subcategories {
 			for _, dif := range sub.difficulties {
-				c.Logf("\t%q %q, items:%v checks:%v", sub.Name, dif.Name, len(dif.items), len(dif.checklist.Checks))
+				c.Logf("\t%q %q, items:%v checks:%v", sub.Name, dif.Descr, len(dif.items), len(dif.checklist.Checks))
 			}
 		}
 	}
