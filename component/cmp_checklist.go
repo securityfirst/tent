@@ -83,10 +83,9 @@ func (c *Checklist) SetContents(contents string) error {
 	parts := strings.Split(contents, bodySeparator)
 	var checks = make([]Check, len(parts))
 	for i, v := range parts {
-		if err := checkMeta(v, &checks[i]); err != nil {
+		if err := setMeta(v, &checks[i]); err != nil {
 			return err
 		}
-		setMeta(v, &checks[i])
 	}
 	c.Checks = checks
 	return nil

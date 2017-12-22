@@ -113,8 +113,5 @@ func (c *Category) Contents() string {
 }
 
 func (c *Category) SetContents(contents string) error {
-	if err := checkMeta(contents, c); err != nil {
-		return err
-	}
 	return setMeta(contents, c)
 }

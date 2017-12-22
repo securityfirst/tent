@@ -71,10 +71,10 @@ func (i *Item) SetContents(contents string) error {
 	if len(parts) != 2 {
 		return ErrContent
 	}
-	if err := checkMeta(parts[0], i); err != nil {
+	if err := setMeta(parts[0], i); err != nil {
 		return err
 	}
 	i.Body = parts[1]
 	i.htmlBody = string(blackfriday.MarkdownCommon([]byte(i.Body)))
-	return setMeta(parts[0], i)
+	return nil
 }

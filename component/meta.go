@@ -17,32 +17,35 @@ type meta interface {
 
 var metaRow = regexp.MustCompile(`\[([a-zA-Z]+)\]: # \(([^)]{0,})\)`)
 
-func checkMeta(meta string, m meta) error {
-	order := m.order()
-	rows := strings.Split(meta, "\n")
-	if len(rows) != len(order) {
-		return ErrContent
-	}
-	for i := range order {
-		m := metaRow.FindStringSubmatch(rows[i])
-		if len(m) != 3 || m[1] != order[i] {
-			return ErrContent
-		}
-	}
-	return nil
-}
-
 type args []interface{}
 
 func setMeta(meta string, m meta) error {
-	order, pointers := m.order(), m.pointers()
-	rows := strings.Split(strings.TrimSpace(meta), "\n")
-	if len(rows) != len(order) {
+	order, pointers, optionals := m.order(), m.pointers(), m.optionals()
+	rows := strings.Split(meta, "\n")
+	if len(rows) < len(order)-len(optionals) {
 		return ErrContent
 	}
-	for i, p := range pointers {
-		if err := setMetaValue(p, metaRow.FindStringSubmatch(rows[i])[2]); err != nil {
-			return fmt.Errorf("meta: %s", err.Error())
+	for i, row := range rows {
+		m := metaRow.FindStringSubmatch(row)
+		if len(m) != 3 {
+			return ErrContent
+		}
+		for {
+			if m[1] == order[i] {
+				if order[i] == optionals[0] {
+					optionals = optionals[1:]
+				}
+				if err := setMetaValue(pointers[i], m[2]); err != nil {
+					return fmt.Errorf("meta: %s", err.Error())
+				}
+				break
+			}
+			if len(optionals) == 0 || order[i] != optionals[0] {
+				return ErrContent
+			}
+			optionals = optionals[1:]
+			pointers = pointers[:i+copy(pointers[i:], pointers[i+1:])]
+			order = order[:i+copy(order[i:], order[i+1:])]
 		}
 	}
 	return nil
@@ -81,15 +84,29 @@ func setMetaValue(p interface{}, v string) error {
 }
 
 func getMeta(m meta) string {
-	order := m.order()
+	order, optionals := m.order(), m.optionals()
 	b := bytes.NewBuffer(nil)
 	for i, v := range m.values() {
+		var isZero bool
+		switch t := v.(type) {
+		case string:
+			isZero = t == ""
+		case int, float64:
+			isZero = t == 0
+		case bool:
+			isZero = t
+		case []string:
+			isZero = len(t) == 0 || len(t) == 1 && t[0] == ""
+			v = strings.Join(t, ";")
+		}
+		if order[i] == optionals[0] {
+			optionals = optionals[1:]
+			if isZero {
+				continue
+			}
+		}
 		if i > 0 {
 			b.WriteRune('\n')
-		}
-		switch t := v.(type) {
-		case []string:
-			v = strings.Join(t, ";")
 		}
 		fmt.Fprintf(b, "[%s]: # (%v)", order[i], v)
 	}

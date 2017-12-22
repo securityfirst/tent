@@ -122,8 +122,5 @@ func (s *Subcategory) values() args      { return args{s.Name, s.Order} }
 func (s *Subcategory) Contents() string { return getMeta(s) }
 
 func (s *Subcategory) SetContents(contents string) error {
-	if err := checkMeta(contents, s); err != nil {
-		return err
-	}
 	return setMeta(contents, s)
 }

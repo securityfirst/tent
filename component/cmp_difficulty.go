@@ -155,9 +155,6 @@ func (d *Difficulty) values() args      { return args{d.Descr} }
 func (d *Difficulty) Contents() string { return getMeta(d) }
 
 func (d *Difficulty) SetContents(contents string) error {
-	if err := checkMeta(contents, d); err != nil {
-		return err
-	}
 	if d.checklist == nil {
 		d.checklist = new(Checklist)
 	}
