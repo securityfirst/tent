@@ -32,7 +32,7 @@ func setMeta(meta string, m meta) error {
 		}
 		for {
 			if m[1] == order[i] {
-				if order[i] == optionals[0] {
+				if len(optionals) > 0 && order[i] == optionals[0] {
 					optionals = optionals[1:]
 				}
 				if err := setMetaValue(pointers[i], m[2]); err != nil {
@@ -99,7 +99,7 @@ func getMeta(m meta) string {
 			isZero = len(t) == 0 || len(t) == 1 && t[0] == ""
 			v = strings.Join(t, ";")
 		}
-		if order[i] == optionals[0] {
+		if len(optionals) != 0 && order[i] == optionals[0] {
 			optionals = optionals[1:]
 			if isZero {
 				continue

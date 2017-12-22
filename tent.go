@@ -40,52 +40,49 @@ func (o *Tent) Register(root *gin.RouterGroup, c auth.Config) {
 		h      = o.repo.Handler()
 	)
 	o.repo.SetConf(c.OAuth(root))
+
 	// Free handlers
-	root.GET(pathTree, h.ParseLocale, h.Tree)
-	// Hook for github
-	root.POST(pathUpdate, func(*gin.Context) {
+	root.POST(pathUpdate, func(*gin.Context) { // Hook for github
 		select {
-		case hookCh <- struct{}{}:
-			// starts an update
-		default:
-			// discard
+		case hookCh <- struct{}{}: // starts an update
+		default: // discard
 		}
 	})
-
-	// Locale and Authorized handlers
 	locale := root.Use(h.ParseLocale)
-	authorized := locale.Use(engine.EnsureUser)
-
+	locale.GET(pathTree, h.Tree)
 	locale.GET(pathInfo, h.Info)
 	locale.GET(pathRepo, h.Root)
-
 	locale.GET(pathCategory, h.SetCat, h.Show)
+	locale.GET(pathSubcategory, h.SetSub, h.Show)
+	locale.GET(pathDifficulty, h.SetDiff, h.Show)
+	locale.GET(pathItem, h.SetItem, h.Show)
+	locale.GET(pathCheck, h.SetCheck, h.ShowChecks)
+	locale.GET(pathAssetID, h.SetAsset, h.AssetShow)
+	locale.GET(pathForm, h.SetForm, h.Show)
+
+	// Locale and Authorized handlers
+	authorized := root.Use(engine.EnsureUser, h.ParseLocale)
+
 	authorized.PUT(pathCategory, h.ParseCat, h.Update)
 	authorized.DELETE(pathCategory, h.ParseCat, h.CanDelete, h.Delete)
 	authorized.POST(pathCategory, h.ParseCat, h.IsNew, h.Create)
 
-	locale.GET(pathSubcategory, h.SetSub, h.Show)
 	authorized.PUT(pathSubcategory, h.ParseSub, h.Update)
 	authorized.DELETE(pathSubcategory, h.ParseSub, h.CanDelete, h.Delete)
 	authorized.POST(pathSubcategory, h.ParseSub, h.IsNew, h.Create)
 
-	locale.GET(pathDifficulty, h.SetDiff, h.Show)
 	authorized.PUT(pathDifficulty, h.ParseDiff, h.Update)
 	authorized.DELETE(pathDifficulty, h.ParseDiff, h.CanDelete, h.Delete)
 	authorized.POST(pathDifficulty, h.ParseDiff, h.IsNew, h.Create)
 
-	locale.GET(pathItem, h.SetItem, h.Show)
 	authorized.PUT(pathItem, h.ParseItem, h.Update)
 	authorized.DELETE(pathItem, h.ParseItem, h.CanDelete, h.Delete)
 	authorized.POST(pathItem, h.ParseItem, h.IsNew, h.Create)
 
-	locale.GET(pathCheck, h.SetCheck, h.ShowChecks)
 	authorized.PUT(pathCheck, h.ParseCheck, h.UpdateChecks)
 
-	locale.GET(pathAssetID, h.SetAsset, h.AssetShow)
 	authorized.POST(pathAsset, h.ParseAsset, h.AssetCreate)
 
-	locale.GET(pathForm, h.SetForm, h.Show)
 	authorized.PUT(pathForm, h.ParseForm, h.Update)
 	authorized.DELETE(pathForm, h.ParseForm, h.CanDelete, h.Delete)
 	authorized.POST(pathForm, h.ParseForm, h.IsNew, h.Create)
