@@ -16,11 +16,22 @@ type Form struct {
 }
 
 func (f *Form) Resource() Resource {
+	contents := []map[string]string{
+		map[string]string{"form": f.Name},
+	}
+	for _, s := range f.Screens {
+		contents = append(contents, map[string]string{"screen": s.Name})
+		for _, i := range s.Items {
+			contents = append(contents, map[string]string{
+				"label":   i.Label,
+				"hint":    i.Hint,
+				"options": strings.Join(i.Options, ";"),
+			})
+		}
+	}
 	return Resource{
-		Slug: f.ID,
-		Content: []map[string]string{
-			map[string]string{"name": f.Name},
-		},
+		Slug:    "forms___" + f.ID,
+		Content: contents,
 	}
 }
 

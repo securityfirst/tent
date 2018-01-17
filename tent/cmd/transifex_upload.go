@@ -18,10 +18,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
-	"gopkg.in/securityfirst/tent.v2/transifex"
 	"github.com/spf13/cobra"
+	"gopkg.in/securityfirst/tent.v2/transifex"
 )
 
 // uploadCmd respresents the upload command
@@ -77,6 +78,9 @@ func uploadRun(cmd *cobra.Command, args []string) {
 
 	for _, a := range args {
 		for _, cmp := range r.All(a) {
+			if p := config.Transifex.Filter; p != "" && !strings.HasPrefix(cmp.Path(), p) {
+				continue
+			}
 			buffer.Reset()
 			resource := cmp.Resource()
 			json.NewEncoder(buffer).Encode(resource.Content)

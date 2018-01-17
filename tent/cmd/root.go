@@ -42,6 +42,7 @@ var config struct {
 		Username       string
 		Password       string
 		RequestPerHour int
+		Filter         string
 	}
 	PauseOnError bool
 	Root         string
