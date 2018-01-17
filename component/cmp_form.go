@@ -10,7 +10,7 @@ import (
 type Form struct {
 	ID      string       `json:"id"`
 	Name    string       `json:"name"`
-	Hash    string       `json:"hash"`
+	Hash    string       `json:"hash,omitempty"`
 	Locale  string       `json:"-"`
 	Screens []FormScreen `json:"screens,omitempty"`
 }
@@ -119,9 +119,9 @@ func (f *FormScreen) values() args      { return args{"screen", f.Name} }
 
 type FormInput struct {
 	Type    string   `json:"type"`
-	Name    string   `json:"name"`
-	Label   string   `json:"label"`
-	Value   []string `json:"value"`
+	Name    string   `json:"name,omitempty"`
+	Label   string   `json:"label,omitempty"`
+	Value   []string `json:"value,omitempty"`
 	Options []string `json:"options,omitempty"`
 	Hint    string   `json:"hint,omitempty"`
 	Lines   int      `json:"lines,omitempty"`

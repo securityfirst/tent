@@ -80,12 +80,12 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 		ass[i] = r.assets[i].ID
 	}
 
-	var forms = make([]string, 0)
+	var forms = make([]*component.Form, 0)
 	for i := range r.forms {
 		if r.forms[i].Locale != locale {
 			continue
 		}
-		forms = append(forms, r.forms[i].ID)
+		forms = append(forms, r.forms[i])
 	}
 
 	return map[string]interface{}{
