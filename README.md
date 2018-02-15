@@ -7,6 +7,52 @@ That allows Tent to use the [**Content as code**](https://github.com/iilab/conte
 
 Some steps are required for using tent.
 
+# Server
+Tent is best run on the following infrastructure:
+
+-Ubuntu Server 16.04.3 LTS
+
+-Windows 2012
+
+We recommend it running with a minimum of 1GB RAM, 1 GB of storage.
+
+# Services
+Location, local laws and choice of service provider is important when considering the security of any deployment. 
+
+For NGOs, we particularly recommend the use https://eclips.is - run by a privacy friendly provider who provide free server space in multiple jurisdictions.
+
+# Security
+We highly recommend hardening of any server that Tent is running on.
+
+For example for Linux we recommend using the following guides:
+
+[Ubuntu Server Hardening Guide: Quick and Secure]
+(https://linux-audit.com/ubuntu-server-hardening-guide-quick-and-secure/)
+
+[Best practices for hardening a new server]
+(https://www.digitalocean.com/community/questions/best-practices-for-hardening-new-sever-in-2017)
+
+For Windows 2012 we recommend using the following guides:
+
+[Windows Sever 2012 Hardening Checklist]
+(https://wikis.utexas.edu/display/ISO/Windows+Server+2012+R2+Hardening+Checklist)
+
+[Server Hardening: Windows Server 2012]
+(https://technet.microsoft.com/en-us/security/jj720323.aspx)
+
+We also recommend the usage of server auditing measurements such as those provided by the [Center for Internet Security](Center for Internet Security) and [SCAP](https://scap.nist.gov/). 
+
+Auditing tools we recommend include CIS-CAT, [Open Scap](https://www.open-scap.org) and [Lynis](https://cisofy.com/lynis/). For non-profits we also want to highlight the availability of a number of discount or free tools that can be used to help ensure the security of a Tent deployment:
+
+[Tenable Nessus Non-Profit Donation](https://www.tenable.com/about-tenable/tenable-in-the-community/tenable-charitable-organization-subscription-program)
+
+[Crowdstrike Non-Profit Donation]
+(https://www.crowdstrike.org)
+
+For enhanced security of the Tent server, we recommend the conducting of a penetration test according to the [SAFETAG](https://safetag.org/) methodology - designed specifically for civil society groups at risk.
+
+
+
 ## Project
 
 Create the repository that will store your content, by using this [page](https://github.com/new). 
@@ -53,11 +99,12 @@ Config:
     Endpoint: "/auth/callback"
   State: "whatever"
 Server:  
-  Port: 80
+  Port: 80                                  # Port used by the App
 Transifex:
   Project: "project-name"
   Username: "user"
   Password: "password"
+  Language: en
 ```
 
 # Run
@@ -121,3 +168,23 @@ This is another sample repo, with sample content, that you can use to check how 
 # New! Branches
 
 You can work on a specific branch of your content project, this is very usefull for testing purpose (i.e. a big update on content).
+
+# Troubleshot
+
+When you execute `tent run` you can check if the app does the checkout correctly:
+
+```
+Checkout with 5ecb0438dc9aec32e4f5d4572584cd9c50b53055 refs/remotes/origin/master
+```
+
+If some files is not formatted correctly and raises an error you will see something like:
+
+```
+Parsing failed: [contents]filepath/file.md - Invalid content
+```
+
+# Localisation
+
+You can upload the app content to transifex for translation with the command `tent transifex upload`
+
+After translations are done you can use `tent transifex download` to import them.
