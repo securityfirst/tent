@@ -15,7 +15,7 @@ type meta interface {
 	values() args
 }
 
-var metaRow = regexp.MustCompile(`\[([a-zA-Z]+)\]: # \(([^)]{0,})\)`)
+var metaRow = regexp.MustCompile(`\[([a-zA-Z]+)\]: # \((.*)\)`)
 
 type args []interface{}
 
