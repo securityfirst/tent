@@ -9,7 +9,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/securityfirst/tent/models"
+	"gopkg.in/securityfirst/tent.v3/models"
 
 	"golang.org/x/oauth2"
 	lib "golang.org/x/oauth2/github"

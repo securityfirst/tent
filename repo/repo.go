@@ -13,9 +13,9 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/google/go-github/github"
-	"github.com/securityfirst/tent/component"
-	"github.com/securityfirst/tent/models"
 	"golang.org/x/oauth2"
+	"gopkg.in/securityfirst/tent.v3/component"
+	"gopkg.in/securityfirst/tent.v3/models"
 )
 
 var (
