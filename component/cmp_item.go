@@ -27,7 +27,9 @@ func (i *Item) Resource() Resource {
 	for i := range parts {
 		content[i+1] = map[string]string{"body": parts[i]}
 	}
-	return Resource{Slug: i.parent.Resource().Slug + "_" + i.ID, Content: content}
+	return Resource{Slug: i.parent.Resource().Slug + "_" + i.ID, Content: []map[string]string{
+		map[string]string{"title": i.Title, "body": i.Body},
+	}}
 }
 
 func (i *Item) SetParent(d *Difficulty) {

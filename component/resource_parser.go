@@ -14,42 +14,19 @@ func splitSlug(s string) []string {
 }
 
 func NewResourceParser() *ResourceParser {
-	r := ResourceParser{}
-	r.categories.index = make(map[[2]string]int)
-	r.categories.list = make([]*Category, 0)
-	r.forms = make(map[[2]string]*Form)
-	return &r
+	return &ResourceParser{
+		categories: make(map[string][]*Category),
+		forms:      make(map[string][]*Form),
+	}
 }
 
 type ResourceParser struct {
 	buffer     bytes.Buffer
-	categories struct {
-		index map[[2]string]int
-		list  []*Category
-	}
-	forms map[[2]string]*Form
+	categories map[string][]*Category
+	forms      map[string][]*Form
 }
 
-func (r *ResourceParser) addCat(c *Category) {
-	r.categories.index[[2]string{c.ID, c.Locale}] = len(r.categories.list)
-	r.categories.list = append(r.categories.list, c)
-}
-
-func (r *ResourceParser) getCat(id, locale string) *Category {
-	if len(r.categories.index) == 0 {
-		return nil
-	}
-	idx := r.categories.index[[2]string{id, locale}]
-	return r.categories.list[idx]
-}
-
-func (r *ResourceParser) Categories() map[string][]*Category {
-	var res = make(map[string][]*Category)
-	for _, cat := range r.categories.list {
-		res[cat.Locale] = append(res[cat.Locale], cat)
-	}
-	return res
-}
+func (r *ResourceParser) Categories() map[string][]*Category { return r.categories }
 
 func (r *ResourceParser) Parse(cmp Component, res *Resource, locale string) error {
 	switch v := cmp.(type) {
@@ -105,15 +82,30 @@ func (r *ResourceParser) parseForm(f *Form, res *Resource, locale string) error 
 			m = m[1:]
 		}
 	}
-	r.forms[[2]string{newForm.ID, newForm.Locale}] = &newForm
+	r.forms[newForm.Locale] = append(r.forms[newForm.Locale], &newForm)
 	return nil
+}
+
+func (r *ResourceParser) getCategory(cat *Category, locale string) *Category {
+	for _, c := range r.categories[locale] {
+		if c.ID == cat.ID {
+			return c
+		}
+	}
+	c := Category{ID: cat.ID, Order: cat.Order, Locale: locale}
+	r.categories[locale] = append(r.categories[locale], &c)
+	return &c
 }
 
 func (r *ResourceParser) parseCategory(c *Category, res *Resource, locale string) error {
 	if len(res.Content) != 1 {
 		return ErrContent
 	}
-	r.addCat(&Category{
+	if cat := r.getCategory(c, locale); cat != nil {
+		cat.Name = res.Content[0]["name"]
+		return nil
+	}
+	r.categories[locale] = append(r.categories[locale], &Category{
 		ID:     c.ID,
 		Order:  c.Order,
 		Name:   res.Content[0]["name"],
@@ -122,56 +114,51 @@ func (r *ResourceParser) parseCategory(c *Category, res *Resource, locale string
 	return nil
 }
 
+func (r *ResourceParser) getSubcategory(sub *Subcategory, locale string) *Subcategory {
+	cat := r.getCategory(sub.parent, locale)
+	for _, s := range cat.subcategories {
+		if s.ID == sub.ID {
+			return s
+		}
+	}
+	s := Subcategory{ID: sub.ID, Order: sub.Order}
+	cat.Add(&s)
+	return &s
+}
+
 func (r *ResourceParser) parseSubcategory(s *Subcategory, res *Resource, locale string) error {
 	if len(res.Content) != 1 {
 		return ErrContent
 	}
-	cat := r.getCat(s.parent.ID, locale)
-	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", s.parent.ID, locale)
-	}
-	cat.Add(&Subcategory{
-		ID:    s.ID,
-		Order: s.Order,
-		Name:  res.Content[0]["name"],
-	})
+	sub := r.getSubcategory(s, locale)
+	sub.Name = res.Content[0]["name"]
 	return nil
+}
+
+func (r *ResourceParser) getDifficulty(diff *Difficulty, locale string) *Difficulty {
+	sub := r.getSubcategory(diff.parent, locale)
+	for _, d := range sub.difficulties {
+		if d.ID == diff.ID {
+			return d
+		}
+	}
+	d := Difficulty{ID: diff.ID}
+	sub.AddDifficulty(&d)
+	return &d
 }
 
 func (r *ResourceParser) parseDifficulty(d *Difficulty, res *Resource, locale string) error {
 	if len(res.Content) != 1 {
 		return ErrContent
 	}
-	cat := r.getCat(d.parent.parent.ID, locale)
-	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", d.parent.parent.ID, locale)
-	}
-	sub := cat.Sub(d.parent.ID)
-	if sub == nil {
-		return fmt.Errorf("No sub %q (%s)", d.parent.ID, locale)
-	}
-	sub.AddDifficulty(&Difficulty{
-		ID:    d.ID,
-		Descr: res.Content[0]["description"],
-	})
+	diff := r.getDifficulty(d, locale)
+	diff.Descr = res.Content[0]["description"]
 	return nil
 }
 
 func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error {
 	if len(res.Content) == 0 {
 		return ErrContent
-	}
-	cat := r.getCat(i.parent.parent.parent.ID, locale)
-	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", i.parent.parent.ID, locale)
-	}
-	sub := cat.Sub(i.parent.parent.ID)
-	if sub == nil {
-		return fmt.Errorf("No sub %q (%s)", i.parent.parent.ID, locale)
-	}
-	dif := sub.Difficulty(i.parent.ID)
-	if dif == nil {
-		return fmt.Errorf("No dif %q (%s)", i.parent.ID, locale)
 	}
 	item := &Item{
 		ID:    i.ID,
@@ -194,29 +181,16 @@ func (r *ResourceParser) parseItem(i *Item, res *Resource, locale string) error 
 		}
 	}
 	item.Body = r.buffer.String()
-	dif.AddItem(item)
+	r.getDifficulty(i.parent, locale).AddItem(item)
 	return nil
 }
 
 func (r *ResourceParser) parseChecklist(c *Checklist, res *Resource, locale string) error {
-	cat := r.getCat(c.parent.parent.parent.ID, locale)
-	if cat == nil {
-		return fmt.Errorf("No cat %q (%s)", c.parent.parent.ID, locale)
-	}
-	sub := cat.Sub(c.parent.parent.ID)
-	if sub == nil {
-		return fmt.Errorf("No sub %q (%s)", c.parent.parent.ID, locale)
-	}
-	dif := sub.Difficulty(c.parent.ID)
-	if dif == nil {
-		return fmt.Errorf("No dif %q (%s)", c.parent.ID, locale)
-	}
-
 	for len(res.Content) > 0 && res.Content[0] == nil {
 		res.Content = res.Content[1:]
 	}
 	if l, e := len(res.Content), len(c.Checks); l != e {
-		return fmt.Errorf("%d checks, %s expected", l, e)
+		return fmt.Errorf("%d checks, %d expected", l, e)
 	}
 
 	var checks Checklist
@@ -226,6 +200,6 @@ func (r *ResourceParser) parseChecklist(c *Checklist, res *Resource, locale stri
 			NoCheck: c.Checks[i].NoCheck,
 		})
 	}
-	dif.SetChecks(&checks)
+	r.getDifficulty(c.parent, locale).SetChecks(&checks)
 	return nil
 }

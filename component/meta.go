@@ -23,12 +23,12 @@ func setMeta(meta string, m meta) error {
 	order, pointers, optionals := m.order(), m.pointers(), m.optionals()
 	rows := strings.Split(meta, "\n")
 	if len(rows) < len(order)-len(optionals) {
-		return ErrContent
+		return fmt.Errorf("Expected %v-%v, got %v", len(order)-len(optionals), len(order), len(rows))
 	}
 	for i, row := range rows {
 		m := metaRow.FindStringSubmatch(row)
 		if len(m) != 3 {
-			return ErrContent
+			return fmt.Errorf("Invalid %q", row)
 		}
 		for {
 			if m[1] == order[i] {
@@ -41,7 +41,7 @@ func setMeta(meta string, m meta) error {
 				break
 			}
 			if len(optionals) == 0 || order[i] != optionals[0] {
-				return ErrContent
+				return fmt.Errorf("Expected %v, got %v", order[i], optionals[0])
 			}
 			optionals = optionals[1:]
 			pointers = pointers[:i+copy(pointers[i:], pointers[i+1:])]
@@ -63,13 +63,13 @@ func setMetaValue(p interface{}, v string) error {
 		}
 		n, err := strconv.Atoi(v)
 		if err != nil {
-			return ErrContent
+			return fmt.Errorf("Invalid int: %v", v)
 		}
 		*pointer = n
 	case *float64:
 		n, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return ErrContent
+			return fmt.Errorf("Invalid float: %v", v)
 		}
 		*pointer = n
 	case *[]string:

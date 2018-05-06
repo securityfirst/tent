@@ -69,7 +69,7 @@ func (p *Parser) parseFile(f *object.File) error {
 	if err := p.setPath(f.Name, cmp); err != nil {
 		return err
 	}
-	if err := cmp.SetContents(strings.TrimSpace(contents)); err != nil {
+	if err := cmp.SetContents(strings.Replace(strings.TrimSpace(contents), "\r\n", "\n", -1)); err != nil {
 		return parseError{f.Name, "contents", err}
 	}
 	return nil
@@ -106,7 +106,8 @@ func (p *Parser) setPath(name string, cmp Component) error {
 	}
 	sub := cat.Sub(parts[2])
 	if sub == nil {
-		return parseError{name, "path", "Invalid sub"}
+		sub = &Subcategory{ID: parts[2]}
+		cat.Add(sub)
 	}
 
 	if dif, ok := cmp.(*Difficulty); ok {
@@ -115,7 +116,8 @@ func (p *Parser) setPath(name string, cmp Component) error {
 	}
 	dif := sub.Difficulty(parts[3])
 	if dif == nil {
-		return parseError{name, "path", "Invalid diff"}
+		dif = &Difficulty{ID: parts[3]}
+		sub.AddDifficulty(dif)
 	}
 
 	switch c := cmp.(type) {
