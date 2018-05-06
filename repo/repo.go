@@ -13,9 +13,9 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 	"gopkg.in/securityfirst/tent.v1/component"
 	"gopkg.in/securityfirst/tent.v1/models"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -72,21 +72,7 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 		cats = append(cats, r.Category(i, locale).Tree(html))
 	}
 
-	var ass = make([]string, len(r.assets))
-	for i := range r.assets {
-		ass[i] = r.assets[i].Id
-	}
-
-	var forms = make([]string, len(r.forms))
-	for i := range r.forms {
-		forms[i] = r.forms[i].Id
-	}
-
-	return map[string]interface{}{
-		"categories": cats,
-		"assets":     ass,
-		"forms":      forms,
-	}
+	return cats
 }
 
 func (r *Repo) client(u *models.User) *github.Client {

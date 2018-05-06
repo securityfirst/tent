@@ -85,7 +85,7 @@ func filterRes(name string) bool {
 	if !strings.HasSuffix(name, fileExt) {
 		return isImage(name)
 	}
-	return !strings.HasSuffix(name, suffixMeta+fileExt)
+	return name != "README.md" && !strings.HasSuffix(name, suffixMeta+fileExt)
 }
 
 func IsMd(name string) bool { return filepath.Ext(name) == fileExt }
