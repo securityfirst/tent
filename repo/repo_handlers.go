@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path"
 	"path/filepath"
 	"sort"
 
@@ -420,7 +421,17 @@ func (r *RepoHandler) Delete(c *gin.Context) {
 }
 
 func (r *RepoHandler) AssetShow(c *gin.Context) {
-	c.Writer.WriteHeader(200)
+	a := r.asset(c)
+	var ct string
+	switch path.Ext(a.ID) {
+	case ".png":
+		ct = "image/png"
+	case ".jpg", "jpeg":
+		ct = "image/jpeg"
+	default:
+		ct = "application/octet-stream"
+	}
+	c.Writer.Header().Set("content-type", ct)
 	c.Writer.WriteString(r.asset(c).Contents())
 }
 

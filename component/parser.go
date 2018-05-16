@@ -62,6 +62,9 @@ func (p *Parser) parseFile(f *object.File) error {
 	if err != nil {
 		return parseError{f.Name, "read", err}
 	}
+	if ok, _ := f.IsBinary(); !ok {
+		contents = strings.Replace(strings.TrimSpace(contents), "\r\n", "\n", -1)
+	}
 	cmp, err := newCmp(f.Name)
 	if err != nil {
 		return parseError{f.Name, "cmp", err}
@@ -69,7 +72,7 @@ func (p *Parser) parseFile(f *object.File) error {
 	if err := p.setPath(f.Name, cmp); err != nil {
 		return err
 	}
-	if err := cmp.SetContents(strings.Replace(strings.TrimSpace(contents), "\r\n", "\n", -1)); err != nil {
+	if err := cmp.SetContents(contents); err != nil {
 		return parseError{f.Name, "contents", err}
 	}
 	return nil
