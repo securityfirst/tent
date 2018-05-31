@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"sync"
 
 	git "gopkg.in/src-d/go-git.v4"
@@ -36,6 +37,18 @@ var commitMsg = map[int]string{
 	actionCreate: "Create",
 	actionUpdate: "Update",
 	actionDelete: "Delete",
+}
+
+func Local(dir, branch string) (*Repo, error) {
+	logger.Printf("Using %q", dir)
+	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: fmt.Sprintf("file://%s", dir)})
+	if err != nil {
+		return nil, err
+	}
+	if branch == "" {
+		branch = "master"
+	}
+	return &Repo{repo: r, name: path.Base(dir), branch: branch}, nil
 }
 
 func New(owner, name, branch string) (*Repo, error) {
@@ -224,6 +237,18 @@ func (r *Repo) Asset(id string) *component.Asset {
 		}
 	}
 	return nil
+}
+
+func (r *Repo) Forms(locale string) []string {
+	r.RLock()
+	defer r.RUnlock()
+	var s []string
+	for _, v := range r.forms {
+		if v.Locale == locale {
+			s = append(s, v.ID)
+		}
+	}
+	return s
 }
 
 func (r *Repo) Form(id string, locale string) *component.Form {
