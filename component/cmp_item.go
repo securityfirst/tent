@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/russross/blackfriday"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 const paragraphSep = "\n\n"
@@ -77,6 +77,6 @@ func (i *Item) SetContents(contents string) error {
 		return err
 	}
 	i.Body = parts[1]
-	i.htmlBody = string(blackfriday.MarkdownCommon([]byte(i.Body)))
+	i.htmlBody = string(blackfriday.Run([]byte(i.Body)))
 	return nil
 }

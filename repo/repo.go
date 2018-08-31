@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -314,14 +315,14 @@ func (r *Repo) request(c component.Component, action int, u models.User, token s
 	switch action {
 	case actionCreate:
 		commit.Content = []byte(c.Contents())
-		_, _, err = r.client(token).Repositories.CreateFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.CreateFile(context.Background(), r.owner, r.name, file, commit)
 	case actionUpdate:
 		commit.SHA = strPtr(c.SHA())
 		commit.Content = []byte(c.Contents())
-		_, _, err = r.client(token).Repositories.UpdateFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.UpdateFile(context.Background(), r.owner, r.name, file, commit)
 	case actionDelete:
 		commit.SHA = strPtr(c.SHA())
-		_, _, err = r.client(token).Repositories.DeleteFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.DeleteFile(context.Background(), r.owner, r.name, file, commit)
 	}
 	if err == nil {
 		go r.Pull()

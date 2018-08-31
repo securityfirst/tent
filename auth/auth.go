@@ -104,7 +104,7 @@ func (e *Engine) fetchUser(token string) error {
 	if _, ok := e.cache[token]; ok {
 		return nil
 	}
-	u, _, err := github.NewClient(e.config.Client(oauth2.NoContext, &oauth2.Token{AccessToken: token})).Users.Get("")
+	u, _, err := github.NewClient(e.config.Client(oauth2.NoContext, &oauth2.Token{AccessToken: token})).Users.Get(oauth2.NoContext, "")
 	if err != nil {
 		return fmt.Errorf("Cannot get User: %s", err)
 	}
