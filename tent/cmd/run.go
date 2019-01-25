@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/securityfirst/tent"
 	"github.com/spf13/cobra"
-	"gopkg.in/securityfirst/tent.v2"
 )
 
 // runCmd respresents the run command

@@ -75,7 +75,7 @@ You will need these for the configuration file.
 
 Download the latest version of the [binary](https://github.com/securityfirst/tent/releases/latest) or build it from source.
 In order to do so install [latest version](https://golang.org/dl/) of Go 
-then execute `go get gopkg.in/securityfirst/tent.v2/tent`.
+then execute `go get github.com/securityfirst/tent/tent`.
 This will install it in your `$GOPATH` (that should be `~/go/bin`)
 
 ## Configuration
@@ -162,7 +162,7 @@ It contains 3 level of hierachy (Category, Subcategory, Difficulty) and inside a
 
 # Sample Repo
 
-This a the repo used by tent in the [Umbrella App](https://play.google.com/store/apps/details?id=org.secfirst.umbrella): https://gopkg.in/securityfirst/tent.v2-content
+This a the repo used by tent in the [Umbrella App](https://play.google.com/store/apps/details?id=org.secfirst.umbrella): https://github.com/securityfirst/tent-content
 This is another sample repo, with sample content, that you can use to check how things works: https://github.com/securityfirst/tent-example
 
 # New! Branches

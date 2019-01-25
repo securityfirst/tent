@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/securityfirst/tent.v2/auth"
-	"gopkg.in/securityfirst/tent.v2/repo"
+	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/repo"
 )
 
 const (

@@ -16,9 +16,9 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/google/go-github/github"
+	"github.com/securityfirst/tent/component"
+	"github.com/securityfirst/tent/models"
 	"golang.org/x/oauth2"
-	"gopkg.in/securityfirst/tent.v2/component"
-	"gopkg.in/securityfirst/tent.v2/models"
 )
 
 var logger = log.New(os.Stdout, "[repo]", log.Ltime|log.Lshortfile)

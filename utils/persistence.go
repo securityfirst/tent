@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/securityfirst/tent.v2/component"
+	"github.com/securityfirst/tent/component"
 )
 
 func WriteCmp(base string, c component.Component) error {

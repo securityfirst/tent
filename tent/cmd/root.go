@@ -19,11 +19,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/repo"
+	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/securityfirst/tent.v2/auth"
-	"gopkg.in/securityfirst/tent.v2/repo"
-	"gopkg.in/securityfirst/tent.v2/transifex"
 )
 
 var cfgFile string

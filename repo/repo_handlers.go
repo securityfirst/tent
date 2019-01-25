@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/github"
-	"gopkg.in/securityfirst/tent.v2/component"
-	"gopkg.in/securityfirst/tent.v2/models"
+	"github.com/securityfirst/tent/component"
+	"github.com/securityfirst/tent/models"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 

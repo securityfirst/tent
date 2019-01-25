@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/securityfirst/tent.v2/utils"
+	"github.com/securityfirst/tent/utils"
 
-	"gopkg.in/securityfirst/tent.v2/component"
+	"github.com/securityfirst/tent/component"
 
+	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
-	"gopkg.in/securityfirst/tent.v2/transifex"
 )
 
 var mute = true

@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
-	"gopkg.in/securityfirst/tent.v2/transifex"
 )
 
 // uploadCmd respresents the upload command
