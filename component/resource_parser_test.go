@@ -24,7 +24,7 @@ func (CmpSuite) TestParseResource(c *C) {
 	err = p.Parse(&subCmp, &subRes, "it")
 	c.Assert(err, IsNil)
 
-	difCmp := Difficulty{ID: "dif", Name: "Test dif", parent: &subCmp}
+	difCmp := Difficulty{ID: "dif", Descr: "Test dif", parent: &subCmp}
 	difRes := Resource{
 		Slug:    "cat___sub___dif",
 		Content: []map[string]string{map[string]string{"name": "dif di prova"}},

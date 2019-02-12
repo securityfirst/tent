@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/russross/blackfriday"
+	"github.com/mattn/godown"
 )
 
 const paragraphSep = "\n\n"
@@ -27,7 +27,9 @@ func (i *Item) Resource() Resource {
 	for i := range parts {
 		content[i+1] = map[string]string{"body": parts[i]}
 	}
-	return Resource{Slug: i.parent.Resource().Slug + "_" + i.ID, Content: content}
+	return Resource{Slug: i.parent.Resource().Slug + "_" + i.ID, Content: []map[string]string{
+		map[string]string{"title": i.Title, "body": i.Body},
+	}}
 }
 
 func (i *Item) SetParent(d *Difficulty) {
@@ -57,9 +59,10 @@ func (i *Item) SetPath(filepath string) error {
 	return nil
 }
 
-func (i *Item) order() []string { return []string{"Title", "Order"} }
-func (i *Item) pointers() args  { return args{&i.Title, &i.Order} }
-func (i *Item) values() args    { return args{i.Title, i.Order} }
+func (*Item) order() []string     { return []string{"Title", "Order"} }
+func (*Item) optionals() []string { return nil }
+func (i *Item) pointers() args    { return args{&i.Title, &i.Order} }
+func (i *Item) values() args      { return args{i.Title, i.Order} }
 
 func (i *Item) Contents() string {
 	return fmt.Sprint(getMeta(i), bodySeparator, i.Body)
@@ -70,10 +73,14 @@ func (i *Item) SetContents(contents string) error {
 	if len(parts) != 2 {
 		return ErrContent
 	}
-	if err := checkMeta(parts[0], i); err != nil {
+	if err := setMeta(parts[0], i); err != nil {
 		return err
 	}
 	i.Body = parts[1]
-	i.htmlBody = string(blackfriday.MarkdownCommon([]byte(i.Body)))
-	return setMeta(parts[0], i)
+	s := strings.Builder{}
+	if err := godown.Convert(&s, strings.NewReader(i.Body), nil); err != nil {
+		return err
+	}
+	i.htmlBody = s.String()
+	return nil
 }

@@ -1,11 +1,17 @@
 package repo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"sync"
+
+	"github.com/securityfirst/tent/component"
+	"github.com/securityfirst/tent/models"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -14,9 +20,9 @@ import (
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
-	"gopkg.in/securityfirst/tent.v3/component"
-	"gopkg.in/securityfirst/tent.v3/models"
 )
+
+var logger = log.New(os.Stdout, "[repo]", log.Ltime|log.Lshortfile)
 
 var (
 	ErrNotReady     = errors.New("Repository not ready")
@@ -35,9 +41,21 @@ var commitMsg = map[int]string{
 	actionDelete: "Delete",
 }
 
+func Local(dir, branch string) (*Repo, error) {
+	logger.Printf("Using %q", dir)
+	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: fmt.Sprintf("file://%s", dir)})
+	if err != nil {
+		return nil, err
+	}
+	if branch == "" {
+		branch = "master"
+	}
+	return &Repo{repo: r, name: path.Base(dir), branch: branch}, nil
+}
+
 func New(owner, name, branch string) (*Repo, error) {
 	address := repoAddress(owner, name)
-	log.Printf("Using %q", address)
+	logger.Printf("Using %q", address)
 	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: address})
 	if err != nil {
 		return nil, err
@@ -77,9 +95,12 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 		ass[i] = r.assets[i].ID
 	}
 
-	var forms = make([]string, len(r.forms))
+	var forms = make([]*component.Form, 0)
 	for i := range r.forms {
-		forms[i] = r.forms[i].ID
+		if r.forms[i].Locale != locale {
+			continue
+		}
+		forms = append(forms, r.forms[i])
 	}
 
 	return map[string]interface{}{
@@ -89,8 +110,8 @@ func (r *Repo) Tree(locale string, html bool) interface{} {
 	}
 }
 
-func (r *Repo) client(u *models.User) *github.Client {
-	return github.NewClient(r.conf.Client(oauth2.NoContext, &u.Token))
+func (r *Repo) client(token string) *github.Client {
+	return github.NewClient(r.conf.Client(oauth2.NoContext, &oauth2.Token{AccessToken: token}))
 }
 
 func (r *Repo) Handler() RepoHandler { return RepoHandler{r} }
@@ -120,6 +141,12 @@ func (r *Repo) All(locale string) []component.Component {
 			}
 		}
 	}
+	for _, form := range r.forms {
+		if form.Locale != locale {
+			continue
+		}
+		list = append(list, form)
+	}
 	return list
 }
 
@@ -148,36 +175,36 @@ func (r *Repo) Pull() {
 
 	err := r.repo.Fetch(&git.FetchOptions{})
 	if err != nil && err != git.NoErrAlreadyUpToDate {
-		log.Println("Pull failed:", err)
+		logger.Println("Pull failed:", err)
 		return
 	}
 	branch := plumbing.ReferenceName("refs/remotes/origin/" + r.branch)
 	hash, err := r.repo.Reference(branch, false)
 	if err != nil {
-		log.Printf("Reference %q failed:", branch, err)
+		logger.Printf("Reference %q failed:", branch, err)
 		return
 	}
 	if r.commit != nil && r.commit.Hash == hash.Hash() {
 		return
 	}
 	if r.commit != nil {
-		log.Println("Changing commit from", r.commit.Hash, "to", hash)
+		logger.Println("Changing commit from", r.commit.Hash, "to", hash)
 	} else {
-		log.Println("Checkout with", hash)
+		logger.Println("Checkout with", hash)
 	}
 	r.commit, err = r.repo.CommitObject(hash.Hash())
 	if err != nil {
-		log.Println("Commit failed:", err)
+		logger.Println("Commit failed:", err)
 		return
 	}
 	var parser component.Parser
 	tree, err := r.commit.Tree()
 	if err != nil {
-		log.Println("Tree failed:", err)
+		logger.Println("Tree failed:", err)
 		return
 	}
 	if err := parser.Parse(tree); err != nil {
-		log.Println("Parsing failed:", err)
+		logger.Println("Parsing failed:", err)
 		return
 	}
 	r.categories = parser.Categories()
@@ -191,7 +218,7 @@ func (r *Repo) file(c component.Component) (*object.File, error) {
 	}
 	r.RLock()
 	defer r.RUnlock()
-	return r.commit.File(c.Path()[1:])
+	return r.commit.File(c.Path()[:])
 }
 
 func (r *Repo) Get(c component.Component) (string, error) {
@@ -212,6 +239,18 @@ func (r *Repo) Asset(id string) *component.Asset {
 		}
 	}
 	return nil
+}
+
+func (r *Repo) Forms(locale string) []string {
+	r.RLock()
+	defer r.RUnlock()
+	var s []string
+	for _, v := range r.forms {
+		if v.Locale == locale {
+			s = append(s, v.ID)
+		}
+	}
+	return s
 }
 
 func (r *Repo) Form(id string, locale string) *component.Form {
@@ -256,20 +295,20 @@ func (r *Repo) ComponentHash(c component.Component) (string, error) {
 	return f.Hash.String(), nil
 }
 
-func (r *Repo) Create(c component.Component, u *models.User) error {
-	return r.request(c, actionCreate, u)
+func (r *Repo) Create(c component.Component, u models.User, token string) error {
+	return r.request(c, actionCreate, u, token)
 }
 
-func (r *Repo) Delete(c component.Component, u *models.User) error {
-	return r.request(c, actionDelete, u)
+func (r *Repo) Delete(c component.Component, u models.User, token string) error {
+	return r.request(c, actionDelete, u, token)
 }
 
-func (r *Repo) Update(c component.Component, u *models.User) error {
-	return r.request(c, actionUpdate, u)
+func (r *Repo) Update(c component.Component, u models.User, token string) error {
+	return r.request(c, actionUpdate, u, token)
 }
 
-func (r *Repo) request(c component.Component, action int, u *models.User) (err error) {
-	file := c.Path()[1:]
+func (r *Repo) request(c component.Component, action int, u models.User, token string) (err error) {
+	file := c.Path()
 	msg := fmt.Sprintf("%s %s", commitMsg[action], file)
 	commit := &github.RepositoryContentFileOptions{
 		Message: &msg, Author: u.AsAuthor(),
@@ -277,14 +316,14 @@ func (r *Repo) request(c component.Component, action int, u *models.User) (err e
 	switch action {
 	case actionCreate:
 		commit.Content = []byte(c.Contents())
-		_, _, err = r.client(u).Repositories.CreateFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.CreateFile(context.Background(), r.owner, r.name, file, commit)
 	case actionUpdate:
 		commit.SHA = strPtr(c.SHA())
 		commit.Content = []byte(c.Contents())
-		_, _, err = r.client(u).Repositories.UpdateFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.UpdateFile(context.Background(), r.owner, r.name, file, commit)
 	case actionDelete:
 		commit.SHA = strPtr(c.SHA())
-		_, _, err = r.client(u).Repositories.DeleteFile(r.owner, r.name, file, commit)
+		_, _, err = r.client(token).Repositories.DeleteFile(context.Background(), r.owner, r.name, file, commit)
 	}
 	if err == nil {
 		go r.Pull()

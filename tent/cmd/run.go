@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/securityfirst/tent.v3"
+	"github.com/securityfirst/tent"
 	"github.com/spf13/cobra"
 )
 
@@ -35,13 +35,13 @@ var runCmd = &cobra.Command{
 	Short: "Starts CMS",
 	Long:  `Starts the Tent CMS`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if config.Id == "" || config.Secret == "" {
+		if config.ID == "" || config.Secret == "" {
 			flag.Usage()
 			os.Exit(1)
 		}
 		e := gin.Default()
 		srv := &http.Server{
-			Addr:    fmt.Sprintf(":%v", config.Port),
+			Addr:    fmt.Sprintf(":%v", config.Server.Port),
 			Handler: e,
 		}
 		r, err := newRepo()
@@ -50,15 +50,11 @@ var runCmd = &cobra.Command{
 		}
 
 		o := tent.New(r)
-		o.Register(e.Group("/v2"), config.Config)
+		o.Register(e.Group(config.Server.Prefix), config.Config)
 
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt)
-		go func() {
-			if err := e.Run(fmt.Sprintf(":%v", config.Port)); err != nil {
-				log.Fatal(err)
-			}
-		}()
+		go srv.ListenAndServe()
 
 		<-stop
 		log.Println("Shutting down the server...")

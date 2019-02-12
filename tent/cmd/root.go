@@ -19,9 +19,9 @@ import (
 	"log"
 	"os"
 
-	"gopkg.in/securityfirst/tent.v3/auth"
-	"gopkg.in/securityfirst/tent.v3/repo"
-	"gopkg.in/securityfirst/tent.v3/transifex"
+	"github.com/securityfirst/tent/auth"
+	"github.com/securityfirst/tent/repo"
+	"github.com/securityfirst/tent/transifex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -29,7 +29,10 @@ import (
 var cfgFile string
 
 var config struct {
-	Port   int
+	Server struct {
+		Port   int
+		Prefix string
+	}
 	Github struct {
 		Handler, Project, Branch string
 	}
@@ -39,6 +42,7 @@ var config struct {
 		Username       string
 		Password       string
 		RequestPerHour int
+		Filter         string
 	}
 	PauseOnError bool
 	Root         string

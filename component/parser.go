@@ -62,6 +62,9 @@ func (p *Parser) parseFile(f *object.File) error {
 	if err != nil {
 		return parseError{f.Name, "read", err}
 	}
+	if ok, _ := f.IsBinary(); !ok {
+		contents = strings.Replace(strings.TrimSpace(contents), "\r\n", "\n", -1)
+	}
 	cmp, err := newCmp(f.Name)
 	if err != nil {
 		return parseError{f.Name, "cmp", err}
@@ -69,13 +72,16 @@ func (p *Parser) parseFile(f *object.File) error {
 	if err := p.setPath(f.Name, cmp); err != nil {
 		return err
 	}
-	if err := cmp.SetContents(strings.TrimSpace(contents)); err != nil {
+	if err := cmp.SetContents(contents); err != nil {
 		return parseError{f.Name, "contents", err}
 	}
 	return nil
 }
 
 func (p *Parser) setPath(name string, cmp Component) error {
+	if err := cmp.SetPath(name); err != nil {
+		return parseError{name, "path", err}
+	}
 	switch c := cmp.(type) {
 	case *Asset:
 		p.assets = append(p.assets, c)
@@ -84,11 +90,8 @@ func (p *Parser) setPath(name string, cmp Component) error {
 		p.forms = append(p.forms, c)
 		return nil
 	}
-	parts := strings.Split(name, "/")
-	if err := cmp.SetPath(name); err != nil {
-		return parseError{name, "path", err}
-	}
 
+	parts := strings.Split(name, "/")
 	idx := [2]string{parts[1], name[9:11]}
 	if cat, ok := cmp.(*Category); ok {
 		p.index[idx] = len(p.categories)
@@ -106,7 +109,8 @@ func (p *Parser) setPath(name string, cmp Component) error {
 	}
 	sub := cat.Sub(parts[2])
 	if sub == nil {
-		return parseError{name, "path", "Invalid sub"}
+		sub = &Subcategory{ID: parts[2]}
+		cat.Add(sub)
 	}
 
 	if dif, ok := cmp.(*Difficulty); ok {
@@ -115,7 +119,8 @@ func (p *Parser) setPath(name string, cmp Component) error {
 	}
 	dif := sub.Difficulty(parts[3])
 	if dif == nil {
-		return parseError{name, "path", "Invalid diff"}
+		dif = &Difficulty{ID: parts[3]}
+		sub.AddDifficulty(dif)
 	}
 
 	switch c := cmp.(type) {

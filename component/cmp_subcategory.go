@@ -114,15 +114,13 @@ func (s *Subcategory) SetPath(filepath string) error {
 	return nil
 }
 
-func (s *Subcategory) order() []string { return []string{"Name", "Order"} }
-func (s *Subcategory) pointers() args  { return args{&s.Name, &s.Order} }
-func (s *Subcategory) values() args    { return args{s.Name, s.Order} }
+func (*Subcategory) order() []string     { return []string{"Name", "Order"} }
+func (*Subcategory) optionals() []string { return nil }
+func (s *Subcategory) pointers() args    { return args{&s.Name, &s.Order} }
+func (s *Subcategory) values() args      { return args{s.Name, s.Order} }
 
 func (s *Subcategory) Contents() string { return getMeta(s) }
 
 func (s *Subcategory) SetContents(contents string) error {
-	if err := checkMeta(contents, s); err != nil {
-		return err
-	}
 	return setMeta(contents, s)
 }

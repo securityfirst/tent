@@ -31,9 +31,10 @@ type Check struct {
 	NoCheck bool   `json:"no_check"`
 }
 
-func (c *Check) order() []string { return []string{"Text", "NoCheck"} }
-func (c *Check) pointers() args  { return args{&c.Text, &c.NoCheck} }
-func (c *Check) values() args    { return args{c.Text, c.NoCheck} }
+func (*Check) order() []string     { return []string{"Text", "NoCheck"} }
+func (*Check) optionals() []string { return nil }
+func (c *Check) pointers() args    { return args{&c.Text, &c.NoCheck} }
+func (c *Check) values() args      { return args{c.Text, c.NoCheck} }
 
 func (c *Checklist) SetParent(d *Difficulty) {
 	c.parent = d
@@ -82,10 +83,9 @@ func (c *Checklist) SetContents(contents string) error {
 	parts := strings.Split(contents, bodySeparator)
 	var checks = make([]Check, len(parts))
 	for i, v := range parts {
-		if err := checkMeta(v, &checks[i]); err != nil {
+		if err := setMeta(v, &checks[i]); err != nil {
 			return err
 		}
-		setMeta(v, &checks[i])
 	}
 	c.Checks = checks
 	return nil
