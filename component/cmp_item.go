@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mattn/godown"
+	"github.com/russross/blackfriday"
 )
 
 const paragraphSep = "\n\n"
@@ -77,10 +77,6 @@ func (i *Item) SetContents(contents string) error {
 		return err
 	}
 	i.Body = parts[1]
-	s := strings.Builder{}
-	if err := godown.Convert(&s, strings.NewReader(i.Body), nil); err != nil {
-		return err
-	}
-	i.htmlBody = s.String()
+	i.htmlBody = string(blackfriday.Run([]byte(i.Body)))
 	return nil
 }

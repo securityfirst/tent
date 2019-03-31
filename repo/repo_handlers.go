@@ -2,6 +2,7 @@ package repo
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -446,5 +447,16 @@ func (r *RepoHandler) AssetCreate(c *gin.Context) {
 }
 
 func (r *RepoHandler) Tree(c *gin.Context) {
-	c.JSON(http.StatusOK, r.repo.Tree(r.locale(c), c.Query("content") == "html"))
+	writeJSON(c, http.StatusOK, r.repo.Tree(r.locale(c), c.Query("content") == "html"))
+}
+
+func writeJSON(c *gin.Context, status int, obj interface{}) {
+	header := c.Writer.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = []string{"application/json; charset=utf-8"}
+	}
+	c.Status(status)
+	e := json.NewEncoder(c.Writer)
+	e.SetEscapeHTML(false)
+	e.Encode(obj)
 }
