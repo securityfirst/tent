@@ -73,9 +73,9 @@ You will need these for the configuration file.
 
 ## Binary
 
-Download the latest version of the [binary](https://github.com/securityfirst/tentreleases/latest) or build it from source.
+Download the latest version of the [binary](https://github.com/securityfirst/tent/releases/latest) or build it from source.
 In order to do so install [latest version](https://golang.org/dl/) of Go 
-then execute `go get github.com/securityfirst/tenttent`.
+then execute `go get github.com/securityfirst/tent/tent`.
 This will install it in your `$GOPATH` (that should be `~/go/bin`)
 
 ## Configuration
